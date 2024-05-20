@@ -1,0 +1,18 @@
+name: CI Workflow
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      
+      - name: Run CI Tests
+        run: |
+          echo "Running CI tests..."
+          # Replace with your actual test commands
+          echo "Tests passed!"
