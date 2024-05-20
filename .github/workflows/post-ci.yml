@@ -1,0 +1,20 @@
+name: Post-CI Workflow
+
+on:
+  workflow_run:
+    workflows: ["CI Workflow"]
+    types:
+      - completed
+
+jobs:
+  post-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Run Post-CI Tasks
+        run: |
+          echo "Running post-CI tasks..."
+          # Replace with your actual post-CI commands
+          echo "Post-CI tasks completed!"
