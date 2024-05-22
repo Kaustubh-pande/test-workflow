@@ -88,10 +88,10 @@ jobs:
       - name: Create Pull Request
         id: create-pull-request
         run: | 
-          pr_url=$(gh pr create -B ${{ github.ref }} -H ${{ env.BRANCH_NAME }} --title '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}' --body 'Update images for ${{ github.event.inputs.tag_name }}')
-          echo "pr_url=${pr_url}" >> $GITHUB_ENV
-          pr_number=$(echo "${pr_url}" | grep -o -E '[0-9]+$')
-          echo "pr_number=${pr_number}" >> $GITHUB_ENV
+          PR_URL=$(gh pr create -B ${{ github.ref }} -H ${{ env.BRANCH_NAME }} --title '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}' --body 'Update images for ${{ github.event.inputs.tag_name }}')
+          echo "PR_URL=${PR_URL}" >> $GITHUB_ENV
+          pr_number=$(echo "$PR_URL" | grep -o -E '[0-9]+$')
+          echo "pr_number=${pr_number}" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.TOKEN }}
   
