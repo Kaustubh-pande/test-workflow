@@ -59,7 +59,7 @@ jobs:
     env:
       GITHUB_BRANCH: ${{ github.ref }}
     outputs:
-      pr_number: ${{ steps.cpr.outputs.pull-request-number }}
+      pr_number: ${{ github.event.number }} #${{ steps.cpr.outputs.pull-request-number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -97,6 +97,7 @@ jobs:
         run: gh pr create -B ${{ github.ref }} -H ${{env.BRANCH_NAME}} --title '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}' --body 'Update images for ${{ github.event.inputs.tag_name }}'
         env:
           GH_TOKEN: ${{ github.TOKEN }}
+  
       # - name: Create Pull Request
       #   uses: devops-infra/action-pull-request@v0.5.5
       #   id: cpr
