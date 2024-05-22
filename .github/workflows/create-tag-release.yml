@@ -71,12 +71,12 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-      - name: Create and checkout new branch
-        id: create_branch
-        run: |
-          BRANCH_NAME="update-param-env-${{ github.event.inputs.tag_name }}"
-          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
-          git checkout -b $BRANCH_NAME
+      # - name: Create and checkout new branch
+      #   id: create_branch
+      #   run: |
+      #     BRANCH_NAME="update-param-env-${{ github.event.inputs.tag_name }}"
+      #     echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+      #     git checkout -b $BRANCH_NAME
       - name: Verify Branch Creation
         run: |
           git fetch origin
@@ -99,7 +99,7 @@ jobs:
           body: Update images for ${{ github.event.inputs.tag_name }}
           token: ${{ github.TOKEN}}
           base: ${{ github.ref }}
-          branch: ${{env.BRANCH_NAME}}
+          # branch: ${{env.BRANCH_NAME}}
           # delete-branch: true
 
   wait-checks:
