@@ -57,14 +57,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-prev-tag
     env:
-      GITHUB_BRANCH: ${{ github.ref }}
+      GITHUB_BRANCH: ${{ github.ref_name }}
     outputs:
       pr_number: ${{ github.event.number }} #${{ steps.cpr.outputs.pull-request-number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Set up Git
@@ -76,7 +76,8 @@ jobs:
         run: |
           BRANCH_NAME="update-param-env-${{ github.event.inputs.tag_name }}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
-          git log -5 --oneline 
+          git log -5 --oneline
+          git checkout origin ${{ github.ref_name }}
           git checkout -b $BRANCH_NAME
       - name: Verify Branch Creation
         run: |
@@ -90,11 +91,11 @@ jobs:
         run: |
           git add config/params.env
           git commit -m "Update image refs for odh release"
-          git pull --rebase origin/$BRANCH_NAME
+          git pull --rebase origin $BRANCH_NAME
           git log -5 --oneline
-          git push -u origin/$BRANCH_NAME
+          git push origin $BRANCH_NAME
       - name: Create Pull Request
-        run: gh pr create -B ${{ github.ref }} -H ${{env.BRANCH_NAME}} --title '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}' --body 'Update images for ${{ github.event.inputs.tag_name }}'
+        run: gh pr create -B ${{ github.ref_name }} -H ${{env.BRANCH_NAME}} --title '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}' --body 'Update images for ${{ github.event.inputs.tag_name }}'
         env:
           GH_TOKEN: ${{ github.TOKEN }}
   
