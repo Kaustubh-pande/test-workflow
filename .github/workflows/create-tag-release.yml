@@ -59,7 +59,7 @@ jobs:
     env:
       GITHUB_BRANCH: ${{ github.ref }}
     outputs:
-      pr_number: ${{ steps.create_pr.outputs.pr_number }} #${{ steps.cpr.outputs.pull-request-number }}
+      pr_number: ${{ steps.create-pull-request.outputs.pr_number }} #${{ steps.cpr.outputs.pull-request-number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -86,6 +86,7 @@ jobs:
           git commit -m "Update image refs for odh release"
           git push origin $BRANCH_NAME
       - name: Create Pull Request
+        id: create-pull-request
         run: | 
           pr_url=$(gh pr create -B ${{ github.ref }} -H ${{ env.BRANCH_NAME }} --title '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}' --body 'Update images for ${{ github.event.inputs.tag_name }}')
           echo "pr_url=${pr_url}" >> $GITHUB_ENV
