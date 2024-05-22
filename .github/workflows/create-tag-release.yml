@@ -133,7 +133,7 @@ jobs:
 
   changelog:
     name: Changelog
-    needs: [check-prev-tag,create-prv,wait-check,merge-pr]
+    needs: [ check-prev-tag,create-pr,wait-checks,merge-pr]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
