@@ -1,6 +1,11 @@
 name: Create Tag and Release with Changelog
 
 on:
+  pull_request:
+    paths:      
+      - '.github/workflows/go-lint.yml'
+      - '.github/workflows/ci.yml'
+
   workflow_dispatch:
     inputs:
       tag_name:
