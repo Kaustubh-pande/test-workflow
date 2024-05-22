@@ -76,6 +76,7 @@ jobs:
         run: |
           BRANCH_NAME="update-param-env-${{ github.event.inputs.tag_name }}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+          git log -5 --oneline 
           git checkout -b $BRANCH_NAME
       - name: Verify Branch Creation
         run: |
@@ -90,11 +91,12 @@ jobs:
           git add config/params.env
           git commit -m "Update image refs for odh release"
           git pull --rebase origin $BRANCH_NAME
+          git log -5 --oneline 
           git push origin $BRANCH_NAME
       - name: Create Pull Request
         run: gh pr create -B ${{ github.ref }} -H ${{env.BRANCH_NAME}} --title '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}' --body 'Update images for ${{ github.event.inputs.tag_name }}'
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GH_TOKEN: ${{ github.TOKEN }}
       # - name: Create Pull Request
       #   uses: devops-infra/action-pull-request@v0.5.5
       #   id: cpr
@@ -121,7 +123,7 @@ jobs:
         run:
           gh pr checks  ${{ needs.create-pr.outputs.pr_number }}  --watch --fail-fast 
         env:     
-          GITHUB_TOKEN: ${{ github.TOKEN}}
+          GH_TOKEN: ${{ github.TOKEN}}
 
 
   merge-pr:
@@ -137,7 +139,7 @@ jobs:
         if: ${{ needs.wait-checks.result == 'success' }}
         run: gh pr merge --merge --auto  ${{ needs.create-pr.outputs.pr_number }} 
         env:     
-           GITHUB_TOKEN: ${{ github.TOKEN}}
+           GH_TOKEN: ${{ github.TOKEN}}
    
       
 
