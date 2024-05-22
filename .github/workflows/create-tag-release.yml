@@ -71,12 +71,12 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-      # - name: Create and checkout new branch
-      #   id: create_branch
-      #   run: |
-      #     BRANCH_NAME="update-param-env-${{ github.event.inputs.tag_name }}"
-      #     echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
-      #     git checkout -b $BRANCH_NAME
+      - name: Create and checkout new branch
+        id: create_branch
+        run: |
+          BRANCH_NAME="update-param-env-${{ github.event.inputs.tag_name }}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+          git checkout -b $BRANCH_NAME
       - name: Verify Branch Creation
         run: |
           git fetch origin
@@ -89,17 +89,18 @@ jobs:
         run: |
           git add config/params.env
           git commit -m "Update image refs for odh release"
+          git push origin $BRANCH_NAME
   
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: devops-infra/action-pull-request@v0.5.5
         id: cpr
         with:
-          commit-message: Update image refs for odh release
+          # commit-message: Update image refs for odh release
           title: '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}'
           body: Update images for ${{ github.event.inputs.tag_name }}
-          token: ${{ github.TOKEN}}
-          base: ${{ github.ref }}
-          # branch: ${{env.BRANCH_NAME}}
+          github_token: ${{ github.TOKEN}}
+          source_branch: ${{env.BRANCH_NAME}}
+          target_branch: ${{ github.ref }}
           # delete-branch: true
 
   wait-checks:
@@ -116,7 +117,7 @@ jobs:
         run:
           gh pr checks  ${{ needs.create-pr.outputs.pr_number }}  --watch --fail-fast 
         env:     
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ github.TOKEN}}
 
 
   merge-pr:
@@ -132,7 +133,7 @@ jobs:
         if: ${{ needs.wait-checks.result == 'success' }}
         run: gh pr merge --merge --auto  ${{ needs.create-pr.outputs.pr_number }} 
         env:     
-           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+           GITHUB_TOKEN: ${{ github.TOKEN}}
    
       
 
