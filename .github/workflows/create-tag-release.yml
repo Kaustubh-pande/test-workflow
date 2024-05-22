@@ -88,6 +88,7 @@ jobs:
           sed -i 's|:v[0-9.]*\b|:${{ github.event.inputs.tag_name }}|gm' config/params.env
       - name: Commit changes
         run: |
+          git remote add origin 'https://github.com/Kaustubh-pande/test-workflow.git'
           git add config/params.env
           git commit -m "Update image refs for odh release"
           git pull --rebase origin $BRANCH_NAME
