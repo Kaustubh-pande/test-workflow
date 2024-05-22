@@ -74,13 +74,14 @@ jobs:
       - name: Create and checkout new branch
         id: create_branch
         run: |
-          BRANCH_NAME="update-param-env-${{ github.event.inputs.tag_name }}-$(date +%s)"
+          BRANCH_NAME="update-param-env-${{ github.event.inputs.tag_name }}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
           git checkout -b $BRANCH_NAME
       - name: Verify Branch Creation
         run: |
           git fetch origin
           git branch -a
+          git branch
       - name: Update params.env with new release version
         run: |     
           sed -i 's|:v[0-9.]*\b|:${{ github.event.inputs.tag_name }}|gm' config/params.env
