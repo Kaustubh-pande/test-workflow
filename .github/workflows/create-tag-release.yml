@@ -90,17 +90,20 @@ jobs:
           git add config/params.env
           git commit -m "Update image refs for odh release"
           git push origin $BRANCH_NAME
-  
       - name: Create Pull Request
-        uses: devops-infra/action-pull-request@v0.5.5
-        id: cpr
-        with:
-          # commit-message: Update image refs for odh release
-          title: '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}'
-          body: Update images for ${{ github.event.inputs.tag_name }}
-          github_token: ${{ github.TOKEN}}
-          source_branch: ${{env.BRANCH_NAME}}
-          target_branch: ${{ github.ref }}
+        run: gh pr create -B ${{ github.ref }} -H ${{env.BRANCH_NAME}} --title '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}' --body 'Update images for ${{ github.event.inputs.tag_name }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      # - name: Create Pull Request
+      #   uses: devops-infra/action-pull-request@v0.5.5
+      #   id: cpr
+      #   with:
+      #     # commit-message: Update image refs for odh release
+      #     title: '[ODH Release] Update images for ${{ github.event.inputs.tag_name }}'
+      #     body: Update images for ${{ github.event.inputs.tag_name }}
+      #     github_token: ${{ github.TOKEN}}
+      #     source_branch: ${{env.BRANCH_NAME}}
+      #     target_branch: ${{ github.ref }}
           # delete-branch: true
 
   wait-checks:
