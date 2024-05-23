@@ -130,9 +130,14 @@ jobs:
           GH_TOKEN: ${{ github.TOKEN}}
   
   comment-lgtm:
-    needs: wait-checks
+    needs: [ check-prev-tag,create-pr,wait-checks ]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
       - name: Add comment to trigger lgtm label
         if: ${{ steps.wait-checks.conclusion == 'success' }}
         run: |
@@ -142,7 +147,7 @@ jobs:
 
   wait-lgtm:
     runs-on: ubuntu-latest
-    needs: [ wait-checks, comment-lgtm ]
+    needs: [ check-prev-tag,create-pr,wait-checks,comment-lgtm ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -150,7 +155,7 @@ jobs:
           fetch-depth: 0
 
       - name: Wait for lgtm label
-        id: wait-lgtm
+        id: wait-lgtm-label
         run: |
           for i in {1..60}; do
             labels=$(gh pr view ${{ needs.create-pr.outputs.pr_number }} --json labels --jq '.labels[].name')
@@ -170,7 +175,7 @@ jobs:
           GH_TOKEN: ${{ github.TOKEN }}
 
   merge-pr:
-    needs: [ check-prev-tag,create-pr, wait-checks,comment-lgtm,wait-lgtm ]
+    needs: [ check-prev-tag,create-pr,wait-checks,comment-lgtm,wait-lgtm ]
     runs-on: ubuntu-latest
     steps:
        - name: Merge PR if LGTM label exists
@@ -212,7 +217,7 @@ jobs:
 
   changelog:
     name: Changelog
-    needs: [ check-prev-tag,create-pr,wait-checks,merge-pr]
+    needs: [ check-prev-tag,create-pr,wait-checks,comment-lgtm,wait-lgtm,merge-pr]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
