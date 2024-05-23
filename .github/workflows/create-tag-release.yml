@@ -142,7 +142,6 @@ jobs:
         if: ${{ needs.wait-checks.result == 'success' }}
         run: |
           gh pr comment ${{ needs.create-pr.outputs.pr_number }} --body "/lgtm"
-          gh issue add-label ${{ github.event.issue.number }} lgtm
         env:
           GH_TOKEN: ${{ github.TOKEN }}
 
