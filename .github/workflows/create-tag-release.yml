@@ -165,7 +165,6 @@ jobs:
             LABEL=$(gh pr view ${{ needs.create-pr.outputs.pr_number }} --json labels --jq '.labels[].name')
             echo "Labels: $LABEL"
             if echo "$LABELS" | grep -qw "lgtm"; then
-                echo "LABEL=${LABEL}" >> $GITHUB_ENV
                 has_lgtm=true
                 echo "has_lgtm=${has_lgtm}" >> $GITHUB_OUTPUT
                 break
