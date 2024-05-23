@@ -139,7 +139,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Add comment to trigger lgtm label
-        if: ${{ steps.wait-checks.conclusion == 'success' }}
+        if: ${{ needs.wait-checks.result == 'success' }}
         run: |
           gh pr comment ${{ needs.create-pr.outputs.pr_number }} --body "/lgtm"
         env:
