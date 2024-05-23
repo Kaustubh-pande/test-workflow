@@ -1,8 +1,10 @@
 name: Issue Command
 
 on:
-  issue_comment:
-    types: [created]
+  issues:
+    types:
+      - reopened
+      - opened
 
 jobs:
   lgtm:
@@ -11,6 +13,6 @@ jobs:
       - name: Check for LGTM command
         if: github.event.comment.body == '/lgtm'
         run: |
-          gh issue add-label ${{ github.event.issue.number }} lgtm
+          gh issue edit ${{ github.event.issue.number }} --add-label lgtm
         env:
           GH_TOKEN: ${{ github.TOKEN }}
