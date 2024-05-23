@@ -184,9 +184,12 @@ jobs:
 
   merge-pr:
     needs: [ check-prev-tag,create-pr,wait-checks,comment-lgtm,wait-lgtm ]
-    
     runs-on: ubuntu-latest
     steps:
+       - name: Checkout code
+         uses: actions/checkout@v4
+         with:
+          ref: ${{ github.ref }}
        - name: Merge PR if LGTM label exists
          if: ${{ steps.wait-lgtm.outputs.has_lgtm }} == 'true'
          run: |
@@ -211,10 +214,7 @@ jobs:
       #     GH_TOKEN: ${{ github.TOKEN }}
 
 
-      # - name: Checkout code
-      #   uses: actions/checkout@v4
-      #   with:
-      #     ref: ${{ github.ref }}
+     
   
       # - name: Enable Pull Request Automerge
       #   if: ${{ needs.wait-checks.result == 'success' }}
