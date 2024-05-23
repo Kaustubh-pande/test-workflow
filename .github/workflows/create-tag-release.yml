@@ -142,6 +142,7 @@ jobs:
         if: ${{ needs.wait-checks.result == 'success' }}
         run: |
           gh pr comment ${{ needs.create-pr.outputs.pr_number }} --body "/lgtm"
+          gh pr edit ${{ needs.create-pr.outputs.pr_number }} --add-label lgtm
         env:
           GH_TOKEN: ${{ github.TOKEN }}
 
@@ -158,7 +159,7 @@ jobs:
         id: wait-lgtm-label
         run: |
           for i in {1..60}; do
-            labels=$(gh pr view 11 --json labels --jq '.labels[].name')
+            labels=$(gh pr view ${{ needs.create-pr.outputs.pr_number }} --json labels --jq '.labels[].name')
             echo "Labels: $labels"
             if echo "$labels" | grep -qw "lgtm"; then
                 echo "has_lgtm=true" >> $GITHUB_ENV
