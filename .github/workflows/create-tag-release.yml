@@ -164,7 +164,7 @@ jobs:
           for i in {1..60}; do
             LABEL=$(gh pr view ${{ needs.create-pr.outputs.pr_number }} --json labels --jq '.labels[].name')
             echo "Labels: $LABEL"
-            if echo "$labels" | grep -qw "lgtm"; then
+            if [ "$labels" = "lgtm" ]; then
                 echo "LABEL=${LABEL}" >> $GITHUB_ENV
                 has_lgtm=true
                 echo "has_lgtm=${has_lgtm}" >> $GITHUB_OUTPUT
@@ -175,7 +175,7 @@ jobs:
             fi
           done
           
-          if [ "$has_lgtm" != "true" ]; then
+          if ! $has_lgtm; then
             echo "Error: 'lgtm' label not found after waiting."
             exit 1
           fi
