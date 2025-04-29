@@ -39,13 +39,14 @@ jobs:
       - name: Detect changed repos
         run: |
           python3 scripts/get_changed_repos.py previous.yaml config/access-control.yaml > changed_repos.json
-
+          cat changed_repos.json
 
       - name: Get active branches for changed repos
         id: set-matrix
         run: |
-            matrix_json=$(python3 scripts/get_matrix_repos.py changed_repos.json | jq -c .)
-            echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"
+            matrix=$(python3 scripts/get_matrix_repos.py changed_repos.json | jq -c .)
+            echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+            echo "Running for repo: $matrix"
         env:
             GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
@@ -92,8 +93,9 @@ jobs:
         run: |
             git fetch origin ${{ matrix.branch }}
             git checkout -b ${{ steps.branch.outputs.name }} origin/${{ matrix.branch }}
+            echo ${{ matrix.branch }} ${{ matrix.repo }}
             python3 ../hack/scripts/generate_owners.py ${{ matrix.repo }} --access-control ../hack/config/access-control.yaml
-
+            cat OWNERS
             git add OWNERS
             git commit -m "Sync OWNERS from access-control.yaml config"
             git push origin ${{ steps.branch.outputs.name }}
