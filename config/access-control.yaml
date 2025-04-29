@@ -1,12 +1,12 @@
 admins:
   - Kaustubh-pande
-  - bfh
 repos:
   TEST-WORKFLOW:
     approvers:
       - Kaustubh-pande
     reviewers:
       - Kaustubh-pande
+      - this-is-working
   repo-b:
     reviewers:
       - pqr 
