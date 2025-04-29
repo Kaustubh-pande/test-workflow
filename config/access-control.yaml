@@ -1,9 +1,9 @@
 admins:
-  - Kaustubh-pande
+
 repos:
   TEST-WORKFLOW:
     approvers:
-      - Kaustubh-pande
+     
     reviewers:
       - Kaustubh-pande
       - this-is-working
