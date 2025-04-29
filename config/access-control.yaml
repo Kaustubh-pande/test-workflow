@@ -1,0 +1,14 @@
+admins:
+  - Kaustubh-pande
+  - bfh
+repos:
+  TEST-WORKFLOW:
+    approvers:
+      - Kaustubh-pande
+    reviewers:
+      - Kaustubh-pande
+  repo-b:
+    reviewers:
+      - pqr 
+    approvers:
+    
