@@ -1,33 +1,45 @@
-name: Python Script Workflow
+name: Test Inline Repo Change Detection
+
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch: # Add this to make it manually dispatchable
+  workflow_dispatch:
 
 jobs:
-  run_python:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Detect changed repos
+      id: detect-changes
+      run: |
+          echo "Running change detection..."
+          repos=$(python3 <<EOF import yaml, json
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
+def load_yaml(path):
+    try:
+        with open(path) as f:
+            return yaml.safe_load(f) or {}
+    except:
+        return {}
 
-      - name: Run Python inline
-        run: |
-          python -c "
-            import sys
-            print(f'Python version: {sys.version}')
-            print('Hello, world!')
-            import os
-            print(f'Current working directory: {os.getcwd()}')
-            # You can add more Python code here, with correct indentation
-            print('This is line 1 of my script')
-            print('This is line 2 of my script')
-            for i in range(3):
-              print(f'Loop iteration: {i}')
-          "
+def normalize(lst):
+    return sorted(set(str(i) for i in (lst or [])))
+
+def list_changed(old, new):
+    return normalize(old) != normalize(new)
+
+def changed_repos(old, new):
+    if list_changed(old.get('admins', []), new.get('admins', [])):
+      return sorted((new.get('repos') or {}).keys())
+      result = []
+      all_repos = set((old.get('repos') or {}).keys()) | set((new.get('repos') or {}).keys())
+    for repo in sorted(all_repos):
+        o = (old.get('repos') or {}).get(repo, {})
+        n = (new.get('repos') or {}).get(repo, {})
+        for key in ['reviewers', 'approvers']:
+            if list_changed(o.get(key, []), n.get(key, [])):
+                result.append(repo)
+                break
+    return result
+
+old = load_yaml('previous.yaml')
+new = load_yaml('config/access-control.yaml')
+print(json.dumps(changed_repos(old, new)))
+EOF
+)
+          echo "repos=$repos" >> "$GITHUB_OUTPUT"
