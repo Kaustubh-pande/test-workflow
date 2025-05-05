@@ -20,13 +20,38 @@ jobs:
       - name: Run Python inline
         run: |
           python3 <<EOF
-          import sys
-          print(f'Python version: {sys.version}')
-          print('Hello, world!')
-          import os
-          print(f'Current working directory: {os.getcwd()}')
-          print('This is line 1 of my script')
-          print('This is line 2 of my script')
-          for i in range(3):
-            print(f'Loop iteration: {i}')
+          import yaml, json
+          
+          def load_yaml(path):
+              try:
+                  with open(path) as f:
+                      return yaml.safe_load(f) or {}
+              except:
+                  return {}
+          
+          def normalize(lst):
+              return sorted(set(str(i) for i in (lst or [])))
+          
+          def list_changed(old, new):
+              return normalize(old) != normalize(new)
+          
+          def changed_repos(old, new):
+              if list_changed(old.get('admins', []), new.get('admins', [])):
+                  return sorted((new.get('repos') or {}).keys())
+              result = []
+              all_repos = set((old.get('repos') or {}).keys()) | set((new.get('repos') or {}).keys())
+              for repo in sorted(all_repos):
+                  o = (old.get('repos') or {}).get(repo, {})
+                  n = (new.get('repos') or {}).get(repo, {})
+                  for key in ['reviewers', 'approvers']:
+                      if list_changed(o.get(key, []), n.get(key, [])):
+                          result.append(repo)
+                          break
+              return result
+          
+          old = load_yaml('previous.yaml')
+          new = load_yaml('config/access-control.yaml')
+          print(json.dumps(changed_repos(old, new)))
           EOF
+          )
+                    echo "repos=$repos" >> "$GITHUB_OUTPUT"
