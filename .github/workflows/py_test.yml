@@ -95,7 +95,7 @@ jobs:
                   new_repo = new_repos.get(repo, {})
                   if repo_access_changed(old_repo, new_repo):
                       changed_repos.append(repo)
-              changed_repos = json.dumps(changed_repos
+              changed_repos = json.dumps(changed_repos)
               print(changed_repos)
               
           
