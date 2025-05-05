@@ -8,6 +8,8 @@ on:
 jobs:
   run_python:
     runs-on: ubuntu-latest
+    outputs:
+          matrix: ${{ steps.changed-repos.outputs.matrix }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -28,8 +30,9 @@ jobs:
 
 
       - name: Run Python inline
+        id: changed-repos
         run: |
-          python3 <<EOF
+          changed_repos= $(python3 <<EOF
           import sys
           import yaml
           import json
@@ -92,9 +95,17 @@ jobs:
                   new_repo = new_repos.get(repo, {})
                   if repo_access_changed(old_repo, new_repo):
                       changed_repos.append(repo)
-          
-              print(json.dumps(changed_repos))
+              changed_repos = json.dumps(changed_repos
+              print(changed_repos)
+              
           
           if __name__ == "__main__":
               main()
           EOF
+          )
+          echo "Changed repos: $changed_repos"
+          echo "repos=$changed_repos" >> "$GITHUB_OUTPUT"
+
+      - name: Print out
+        run: |
+          echo ${{ steps.changed-repos.outputs.repos }}
