@@ -32,7 +32,7 @@ jobs:
       - name: Run Python inline
         id: changed-repos
         run: |
-          changed_repos= $(python3 <<EOF
+          repos=$(python3 - <<'EOF'
           import sys
           import yaml
           import json
@@ -103,8 +103,8 @@ jobs:
               main()
           EOF
           )
-          echo "Changed repos: $changed_repos"
-          echo "repos=$changed_repos" >> "$GITHUB_OUTPUT"
+          echo "repos=${repos}" >> "$GITHUB_OUTPUT"
+
 
       - name: Print out
         run: |
