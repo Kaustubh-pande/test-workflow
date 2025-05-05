@@ -1,0 +1,33 @@
+name: Python Script Workflow
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Add this to make it manually dispatchable
+
+jobs:
+  run_python:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Run Python inline
+        run: |
+          python -c "
+            import sys
+            print(f'Python version: {sys.version}')
+            print('Hello, world!')
+            import os
+            print(f'Current working directory: {os.getcwd()}')
+            # You can add more Python code here, with correct indentation
+            print('This is line 1 of my script')
+            print('This is line 2 of my script')
+            for i in range(3):
+              print(f'Loop iteration: {i}')
+          "
