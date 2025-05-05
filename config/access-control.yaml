@@ -1,5 +1,6 @@
 admins:
   - Kaustubh-pande
+  - new-member
 repos:
   TEST-WORKFLOW:
     approvers:
