@@ -177,7 +177,7 @@ jobs:
                     except Exception as e:
                         print(f"⚠️ Failed to process repo {repo}: {e}", file=sys.stderr)
             
-                matrix = json.dumps(matrix,indent=2))
+                matrix = json.dumps(matrix,indent=2)
                 print(matrix)
             if __name__ == "__main__":
                 main()
