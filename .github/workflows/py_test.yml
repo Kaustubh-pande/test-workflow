@@ -118,7 +118,7 @@ jobs:
             import sys
             import json
             import requests
-            from datetime import datetime, timedelta, UTC
+            from datetime import datetime, timedelta, timezone
             
             print(os.getenv("REPOS"))
             GITHUB_API = "https://api.github.com"
@@ -131,7 +131,7 @@ jobs:
                 sys.exit(1)
             
             headers = {"Authorization": f"token {TOKEN}"}
-            cutoff = datetime.now(UTC) - timedelta(days=DAYS_ACTIVE)
+            cutoff = datetime.now(timezone.utc) - timedelta(days=DAYS_ACTIVE)
             
             def get_default_branch(repo):
                 url = f"{GITHUB_API}/repos/{ORG}/{repo}"
@@ -149,10 +149,13 @@ jobs:
                     commit_url = branch["commit"]["url"]
                     commit_resp = requests.get(commit_url, headers=headers)
                     commit_resp.raise_for_status()
-                    commit_date = commit_resp.json()["commit"]["committer"]["date"]
-                    dt = datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ")
-                    if dt >= cutoff:
+                    # commit_date = commit_resp.json()["commit"]["committer"]["date"]
+                    commit_date = parser.isoparse(commit_resp.json()["commit"]["committer"]["date"])
+                    # dt = datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ")
+                    if commit_date >= cutoff:  # Safe comparison
                         branches.append(name)
+                    # if dt >= cutoff:
+                    #     branches.append(name)
                 return branches
             
             def main():
