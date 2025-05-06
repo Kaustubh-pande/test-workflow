@@ -8,6 +8,7 @@ repos:
       - xyz
     reviewers:
       - Kaustubh-pande
+      - bcz
   repo-b:
     reviewers:
       - pqr 
