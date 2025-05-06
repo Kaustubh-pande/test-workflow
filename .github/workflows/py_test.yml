@@ -113,7 +113,7 @@ jobs:
       - name: Get active branches for changed repos
         id: set-matrix
         run: |
-            matrix=$(python3 - <<'EOF'
+            matrix=$(python3 <<EOF
             import os
             import sys
             import json
@@ -167,8 +167,6 @@ jobs:
                   print("🛑 No repositories changed. Skipping.")
                   sys.exit(0)
                 
-
-                print(changed_repos,"json data dump final ver")
                 matrix = []
             
                 for repo in changed_repos:
@@ -187,7 +185,7 @@ jobs:
                 main()
             EOF
             )
-            echo "matrix=$(echo $matrix | jq -c .)" >> "$GITHUB_OUTPUT"
+            echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
             echo "Running for repo: $matrix"
         env:
             GITHUB_TOKEN: ${{ secrets.TOKEN }}
