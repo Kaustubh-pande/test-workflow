@@ -156,14 +156,14 @@ jobs:
                 return branches
             
             def main():
-                # if len(sys.argv) != 2:
-                #     print("Usage: python get_matrix_repos.py <changed_repos.json>")
-                #     sys.exit(1)
-            
-                # with open(sys.argv[1]) as f:
-                #     changed_repos = json.load(f)
                 repos_json = os.getenv('REPOS')
-                changed_repos = json.loads(repos_json or '[]')
+                changed_repos = json.loads(repos_json or '[]')            
+                 # Exit early if nothing changed
+                if not changed_repos:
+                  print("🛑 No repositories changed. Skipping.")
+                  sys.exit(0)
+                
+
                 print(changed_repos,"json data dump final ver")
                 matrix = []
             
