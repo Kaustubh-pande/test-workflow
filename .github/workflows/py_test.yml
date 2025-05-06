@@ -121,7 +121,6 @@ jobs:
             from datetime import datetime, timedelta, timezone
             from dateutil import parser
             
-            print(os.getenv("REPOS"))
             GITHUB_API = "https://api.github.com"
             ORG = os.getenv("ORG_NAME")
             TOKEN = os.getenv("GITHUB_TOKEN")
