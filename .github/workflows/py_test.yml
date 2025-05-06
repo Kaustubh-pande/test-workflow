@@ -101,6 +101,9 @@ jobs:
                   if repo_access_changed(old_repo, new_repo):
                       changed_repos.append(repo)
               changed_repos = json.dumps(changed_repos)
+              if not changed_repos:
+                  print("🛑 No repositories changed. Skipping.")
+                  sys.exit(0)
               print(changed_repos)
               
           
@@ -149,13 +152,9 @@ jobs:
                     commit_url = branch["commit"]["url"]
                     commit_resp = requests.get(commit_url, headers=headers)
                     commit_resp.raise_for_status()
-                    # commit_date = commit_resp.json()["commit"]["committer"]["date"]
                     commit_date = parser.isoparse(commit_resp.json()["commit"]["committer"]["date"])
-                    # dt = datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ")
-                    if commit_date >= cutoff:  # Safe comparison
+                    if commit_date >= cutoff:
                         branches.append(name)
-                    # if dt >= cutoff:
-                    #     branches.append(name)
                 return branches
             
             def main():
@@ -185,12 +184,10 @@ jobs:
             EOF
             )
             compact=$(echo "$matrix" | jq -c .)
-            # encoded=$(echo "$compact" | base64)
-            # echo "matrix_b64=$encoded" >> "$GITHUB_OUTPUT"
-            matrix_b64=$(echo "$compact" | base64 | tr -d '\n')
-            echo "matrix_b64=$matrix_b64" >> "$GITHUB_OUTPUT"
+            # matrix_b64=$(echo "$compact" | base64 | tr -d '\n')
+            # echo "matrix_b64=$matrix_b64" >> "$GITHUB_OUTPUT"
+            echo "matrix_b64=$compact" >> "$GITHUB_OUTPUT"
 
-            # echo "matrix=$matrix_b64" >> "$GITHUB_OUTPUT"
             echo "🔐 Encoded matrix output ready"
 
         env:
@@ -201,5 +198,5 @@ jobs:
           echo "Repos:\n"
           echo ${{ steps.changed-repos.outputs.repos }}
           echo "Matrix:\n"
-          echo "${{ steps.set-matrix.outputs.matrix_b64 }}" | base64 --decode
+          echo "${{ steps.set-matrix.outputs.matrix_b64 }}"
 
