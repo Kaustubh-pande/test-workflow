@@ -186,10 +186,11 @@ jobs:
             EOF
             )
             compact=$(echo "$matrix" | jq -c .)
-            encoded=$(echo "$compact" | base64)
-            echo "matrix_b64=$encoded" >> "$GITHUB_OUTPUT"
+            # encoded=$(echo "$compact" | base64)
+            # echo "matrix_b64=$encoded" >> "$GITHUB_OUTPUT"
+            matrix_b64=$(echo "$compact" | base64 | tr -d '\n')
 
-            # echo "matrix=$encoded" >> "$GITHUB_OUTPUT"
+            # echo "matrix=$matrix_b64" >> "$GITHUB_OUTPUT"
             echo "🔐 Encoded matrix output ready"
 
         env:
