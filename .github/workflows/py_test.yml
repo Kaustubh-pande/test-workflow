@@ -185,7 +185,8 @@ jobs:
                 main()
             EOF
             )
-            echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
+            compact=$(echo "$matrix" | jq -c .)
+            echo "matrix=$compact" >> "$GITHUB_OUTPUT"
             echo "Running for repo: $matrix"
         env:
             GITHUB_TOKEN: ${{ secrets.TOKEN }}
