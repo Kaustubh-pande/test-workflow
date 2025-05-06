@@ -199,6 +199,8 @@ jobs:
             REPOS: ${{ steps.changed-repos.outputs.repos }}
       - name: Print out
         run: |
+          echo "Repos:\n"
           echo ${{ steps.changed-repos.outputs.repos }}
+          echo "Matrix:\n"
           echo "${{ steps.set-matrix.outputs.matrix_b64 }}" | base64 --decode
 
