@@ -118,7 +118,7 @@ jobs:
             import sys
             import json
             import requests
-            from datetime import datetime, timedelta
+            from datetime import datetime, timedelta, UTC
             
             print(os.getenv("REPOS"))
             GITHUB_API = "https://api.github.com"
@@ -131,7 +131,7 @@ jobs:
                 sys.exit(1)
             
             headers = {"Authorization": f"token {TOKEN}"}
-            cutoff = datetime.utcnow() - timedelta(days=DAYS_ACTIVE)
+            cutoff = datetime.now(UTC) - timedelta(days=DAYS_ACTIVE)
             
             def get_default_branch(repo):
                 url = f"{GITHUB_API}/repos/{ORG}/{repo}"
@@ -177,13 +177,13 @@ jobs:
                     except Exception as e:
                         print(f"⚠️ Failed to process repo {repo}: {e}", file=sys.stderr)
             
-                print(json.dumps(matrix, indent=2))
-            
+                matrix = json.dumps(matrix,indent=2))
+                print(matrix)
             if __name__ == "__main__":
                 main()
             EOF
             )
-            echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+            echo "matrix=$(echo $matrix | jq -c .)" >> "$GITHUB_OUTPUT"
             echo "Running for repo: $matrix"
         env:
             GITHUB_TOKEN: ${{ secrets.TOKEN }}
