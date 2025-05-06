@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install Python dependencies
-        run: pip install pyyaml requests
+        run: pip install pyyaml requests python-dateutil
 
       - name: Get previous access-control.yaml
         run: |
@@ -119,6 +119,7 @@ jobs:
             import json
             import requests
             from datetime import datetime, timedelta, timezone
+            from dateutil import parser
             
             print(os.getenv("REPOS"))
             GITHUB_API = "https://api.github.com"
