@@ -7,7 +7,7 @@ on:
 
 env:
   ORG_NAME: Kaustubh-pande  # <-- set your org name here
-  FORK_ORG_NAME: Kaustubh-pande
+  FORK_ORG_NAME: rpancham
 
 jobs:
   build-matrix:
@@ -213,7 +213,7 @@ jobs:
       - name: Clone forked repo
         run: |
           git clone --depth=1 --branch ${{ matrix.branch }} \
-            https://x-access-token:${{ secrets.TOKEN }}@github.com/${{ env.FORK_ORG_NAME }}/${{ matrix.repo }}.git ${{ matrix.repo }}-forked
+            https://x-access-token:${{ secrets.TOKEN_FORKED }}@github.com/${{ env.FORK_ORG_NAME }}/${{ matrix.repo }}.git ${{ matrix.repo }}-forked
           cd ${{ matrix.repo }}-forked
           git remote add upstream https://github.com/${{ env.ORG_NAME }}/${{ matrix.repo }}.git
   
