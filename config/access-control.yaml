@@ -13,3 +13,4 @@ repos:
     reviewers:
       - rpancham 
     approvers:
+      - test
