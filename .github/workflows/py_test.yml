@@ -7,9 +7,11 @@ on:
 
 env:
   ORG_NAME: Kaustubh-pande  # <-- set your org name here
+  FORK_ORG_NAME: Kaustubh-pande
 
 jobs:
-  run_python:
+  build-matrix:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
           repo: ${{ steps.changed-repos.outputs.repos }}
@@ -70,9 +72,6 @@ jobs:
               return False
           
           def main():
-              # if len(sys.argv) != 3:
-              #     print("Usage: python get_changed_repos.py <old_yaml> <new_yaml>")
-              #     sys.exit(1)
           
               old_path= 'previous.yaml'
               new_path = 'config/access-control.yaml'
@@ -116,7 +115,7 @@ jobs:
       - name: Get active branches for changed repos
         id: set-matrix
         run: |
-            matrix=$(python3 <<EOF
+            final_matrix=$(python3 <<EOF
             import os
             import sys
             import json
@@ -177,19 +176,14 @@ jobs:
                     except Exception as e:
                         print(f"⚠️ Failed to process repo {repo}: {e}", file=sys.stderr)
             
-                matrix=json.dumps(matrix)
-                print(matrix)
+                final_matrix=json.dumps(matrix)
+                print(final_matrix)
             if __name__ == "__main__":
                 main()
             EOF
             )
-            compact=$(echo "$matrix" | jq -c .)
-            # matrix_b64=$(echo "$compact" | base64 | tr -d '\n')
-            # echo "matrix_b64=$matrix_b64" >> "$GITHUB_OUTPUT"
-            echo "matrix_b64=$compact" >> "$GITHUB_OUTPUT"
-
-            echo "🔐 Encoded matrix output ready"
-
+            compact=$(echo "$final_matrix" | jq -c .)
+            echo "matrix=$compact" >> "$GITHUB_OUTPUT"
         env:
             GITHUB_TOKEN: ${{ secrets.TOKEN }}
             REPOS: ${{ steps.changed-repos.outputs.repos }}
@@ -198,5 +192,128 @@ jobs:
           echo "Repos:\n"
           echo ${{ steps.changed-repos.outputs.repos }}
           echo "Matrix:\n"
-          echo "${{ steps.set-matrix.outputs.matrix_b64 }}"
+          echo "${{ steps.set-matrix.outputs.matrix }}"
+  sync-owners:
+    runs-on: ubuntu-latest
+    needs: build-matrix
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+    steps:
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+  
+      - name: Checkout hack repo
+        uses: actions/checkout@v4
+        with:
+          path: hack
+  
+      - name: Clone forked repo
+        run: |
+          git clone --depth=1 --branch ${{ matrix.branch }} \
+            https://x-access-token:${{ secrets.TOKEN }}@github.com/${{ env.FORK_ORG_NAME }}/${{ matrix.repo }}.git ${{ matrix.repo }}-forked
+          cd ${{ matrix.repo }}-forked
+          git remote add upstream https://github.com/${{ env.ORG_NAME }}/${{ matrix.repo }}.git
+  
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+            python-version: '3.x'
+            working-directory: ${{ matrix.repo }}-forked
 
+      - name: Install Python dependencies
+        run: |
+            pip install pyyaml
+        working-directory: ${{ matrix.repo }}-forked
+
+      - name: Create new branch and update OWNERS
+        run: |
+          cd ${{ matrix.repo }}-forked
+          git fetch upstream ${{ matrix.branch }}
+          branch_Name=${{ matrix.branch }}-hackrepo-${{ github.event.pull_request.number }}
+          git checkout -b $branch_Name upstream/${{ matrix.branch }}
+  
+          echo "🔧 Running generating owners..."
+          # python3 ../hack/scripts/generate_owners.py ${{ matrix.repo }} --access-control ../hack/config/access-control.yaml
+          python3 <<EOF
+            import os
+            import sys
+            import yaml    
+
+            def generate_owners_file(repo_name, access_control):
+              admins = access_control.get('admins', [])
+              repos = access_control.get('repos', {})
+              repo_info = repos.get(repo_name, {})
+              # Safely default reviewers and approvers to empty lists
+              repo_reviewers = repo_info.get('reviewers') or []
+              repo_approvers = repo_info.get('approvers') or []
+      
+              reviewers = set(repo_reviewers + admins)
+              approvers = set(repo_approvers + admins)
+              # Validation: must have at least one reviewer and one approver
+              if not reviewers:
+                  raise ValueError(f"❌ No reviewers found for repo {repo_name} after adding admins.")
+              if not approvers:
+                  raise ValueError(f"❌ No approvers found for repo {repo_name} after adding admins.")
+              owners_content = {
+                  'reviewers': sorted(reviewers),
+                  'approvers': sorted(approvers)
+              }
+          
+              with open('OWNERS', 'w') as f:
+                  f.write("# This OWNERS file is auto-generated by GitHub Action from hack access-control.yaml\n")
+                  yaml.dump(owners_content, f, default_flow_style=False)
+          
+              print(f"✅ Successfully generated OWNERS file for {repo_name}")
+
+            def validate_owners_file():
+              with open('OWNERS') as f:
+                  owners = yaml.safe_load(f)
+          
+              if not isinstance(owners, dict):
+                  raise ValueError("❌ OWNERS file is not a valid YAML dictionary.")
+              if 'reviewers' not in owners or 'approvers' not in owners:
+                  raise ValueError("❌ OWNERS file must contain 'reviewers' and 'approvers' sections.")
+          
+              for field in ['reviewers', 'approvers']:
+                  if not isinstance(owners[field], list):
+                      raise ValueError(f"❌ '{field}' must be a list of strings.")
+                  if not owners[field]:
+                      raise ValueError(f"❌ '{field}' must not be empty.")
+                  for user in owners[field]:
+                      if not isinstance(user, str):
+                          raise ValueError(f"❌ '{field}' must be a list of strings.")
+          
+              print("✅ OWNERS file validation successful!")
+            # ---- main ----
+            repo_name = os.environ.get("REPO_NAME")
+            if not repo_name:
+                print("❌ Environment variable REPO_NAME not set")
+                sys.exit(1)
+            
+            access_control_path = os.environ.get("ACCESS_CONTROL_PATH", "../hack/config/access-control.yaml")
+            if not os.path.isfile(access_control_path):
+                print(f"❌ Access control file not found at: {access_control_path}")
+                sys.exit(1)
+            
+            print(f"🔵 Generating OWNERS for repo: {repo_name} using config: {access_control_path}")
+            
+            with open(access_control_path) as f:
+                access_control = yaml.safe_load(f)
+            
+            generate_owners_file(repo_name, access_control)
+            validate_owners_file()
+            EOF
+          
+          echo "📁 OWNERS content:"
+          cat OWNERS
+
+          git add OWNERS
+          git commit -m "Update OWNERS file as change in hack/config/access-control.yaml"
+          git push origin ${{ steps.branch.outputs.name }}
+        working-directory: ${{ matrix.repo }}-forked
+        env:
+          REPO_NAME: ${{ matrix.repo }}
+          ACCESS_CONTROL_PATH: ../hack/config/access-control.yaml
