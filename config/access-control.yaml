@@ -11,6 +11,5 @@ repos:
       - bcz
   repo-b:
     reviewers:
-      - pqr 
+      - rpancham 
     approvers:
-      - abcz
