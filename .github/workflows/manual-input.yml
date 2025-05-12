@@ -28,5 +28,5 @@ jobs:
         run: echo "✅ Running because run-step is true!"
 
       - name: Run override snapshot step if not skipped
-        if: github.event.inputs.skip-override-snapshot-gen == 'false'
+        if: inputs.skip-override-snapshot-gen == 'false'
         run: echo "🛠️ Running override snapshot step (not skipped)"
