@@ -1,0 +1,32 @@
+name: Test Inputs
+
+on:
+  workflow_dispatch:
+    inputs:
+      run-step:
+        type: boolean
+        description: "Run the main step?"
+        required: false
+        default: false
+      skip-override-snapshot-gen:
+        type: boolean
+        description: "Skip override snapshot generation?"
+        required: false
+        default: false
+
+jobs:
+  test-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show all input values
+        run: |
+          echo "run-step: ${{ github.event.inputs.run-step }}"
+          echo "skip-override-snapshot-gen: ${{ github.event.inputs.skip-override-snapshot-gen }}"
+
+      - name: Run main step if run-step is true
+        if: github.event.inputs.run-step == 'true'
+        run: echo "✅ Running because run-step is true!"
+
+      - name: Run override snapshot step if not skipped
+        if: github.event.inputs.skip-override-snapshot-gen == 'false'
+        run: echo "🛠️ Running override snapshot step (not skipped)"
