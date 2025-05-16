@@ -351,7 +351,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        repo: ${{ fromJson(needs.build-matrix.outputs.matrix }}
+        repo: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
     steps:
       - name: Set up Git
         run: |
