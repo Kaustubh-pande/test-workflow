@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
           repo: ${{ steps.changed-repos.outputs.repos }}
-          matrix: ${{ steps.set-matrix.outputs.matrix_b64 }}
+          # matrix: ${{ steps.set-matrix.outputs.matrix_b64 }}
 
     steps:
       - name: Checkout repo
@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install Python dependencies
-        run: pip install pyyaml requests python-dateutil
+        run: pip install pyyaml
 
       - name: Get previous access-control.yaml
         run: |
@@ -102,7 +102,7 @@ jobs:
                   new_repo = new_repos.get(repo, {})
                   if repo_access_changed(old_repo, new_repo):
                       changed_repos.append(repo)
-              changed_repos = json.dumps(changed_repos)
+              changed_repos = json.dumps(sorted(changed_repos))
               if not changed_repos:
                   print("🛑 No repositories changed. Skipping.")
                   sys.exit(0)
@@ -115,101 +115,238 @@ jobs:
           )
           echo "repos=${repos}" >> "$GITHUB_OUTPUT"
 
-      - name: Get active branches for changed repos
-        id: set-matrix
-        run: |
-            final_matrix=$(python3 <<EOF
-            import os
-            import sys
-            import json
-            import requests
-            from datetime import datetime, timedelta, timezone
-            from dateutil import parser
+  #     - name: Get active branches for changed repos
+  #       id: set-matrix
+  #       run: |
+  #           final_matrix=$(python3 <<EOF
+  #           import os
+  #           import sys
+  #           import json
+  #           import requests
+  #           from datetime import datetime, timedelta, timezone
+  #           from dateutil import parser
             
-            GITHUB_API = "https://api.github.com"
-            ORG = os.getenv("ORG_NAME")
-            TOKEN = os.getenv("GITHUB_TOKEN")
-            DAYS_ACTIVE = int(os.getenv("BRANCH_ACTIVE_DAYS", 90))
+  #           GITHUB_API = "https://api.github.com"
+  #           ORG = os.getenv("ORG_NAME")
+  #           TOKEN = os.getenv("GITHUB_TOKEN")
+  #           DAYS_ACTIVE = int(os.getenv("BRANCH_ACTIVE_DAYS", 90))
             
-            if not TOKEN or not ORG:
-                print("❌ GITHUB_TOKEN or ORG_NAME not set in environment")
-                sys.exit(1)
+  #           if not TOKEN or not ORG:
+  #               print("❌ GITHUB_TOKEN or ORG_NAME not set in environment")
+  #               sys.exit(1)
             
-            headers = {"Authorization": f"token {TOKEN}"}
-            cutoff = datetime.now(timezone.utc) - timedelta(days=DAYS_ACTIVE)
+  #           headers = {"Authorization": f"token {TOKEN}"}
+  #           cutoff = datetime.now(timezone.utc) - timedelta(days=DAYS_ACTIVE)
             
-            def get_default_branch(repo):
-                url = f"{GITHUB_API}/repos/{ORG}/{repo}"
-                resp = requests.get(url, headers=headers)
-                resp.raise_for_status()
-                return resp.json().get("default_branch", "main")
+  #           def get_default_branch(repo):
+  #               url = f"{GITHUB_API}/repos/{ORG}/{repo}"
+  #               resp = requests.get(url, headers=headers)
+  #               resp.raise_for_status()
+  #               return resp.json().get("default_branch", "main")
             
-            def get_active_branches(repo):
-                branches = []
-                url = f"{GITHUB_API}/repos/{ORG}/{repo}/branches?per_page=100"
-                resp = requests.get(url, headers=headers)
-                resp.raise_for_status()
-                for branch in resp.json():
-                    name = branch["name"]
-                    commit_url = branch["commit"]["url"]
-                    commit_resp = requests.get(commit_url, headers=headers)
-                    commit_resp.raise_for_status()
-                    commit_date = parser.isoparse(commit_resp.json()["commit"]["committer"]["date"])
-                    if commit_date >= cutoff:
-                        branches.append(name)
-                return branches
+  #           def get_active_branches(repo):
+  #               branches = []
+  #               url = f"{GITHUB_API}/repos/{ORG}/{repo}/branches?per_page=100"
+  #               resp = requests.get(url, headers=headers)
+  #               resp.raise_for_status()
+  #               for branch in resp.json():
+  #                   name = branch["name"]
+  #                   commit_url = branch["commit"]["url"]
+  #                   commit_resp = requests.get(commit_url, headers=headers)
+  #                   commit_resp.raise_for_status()
+  #                   commit_date = parser.isoparse(commit_resp.json()["commit"]["committer"]["date"])
+  #                   if commit_date >= cutoff:
+  #                       branches.append(name)
+  #               return branches
             
-            def main():
-                repos_json = os.getenv('REPOS')
-                changed_repos = json.loads(repos_json or '[]')            
-                 # Exit early if nothing changed
-                if not changed_repos:
-                  print("🛑 No repositories changed. Skipping.")
-                  sys.exit(0)
+  #           def main():
+  #               repos_json = os.getenv('REPOS')
+  #               changed_repos = json.loads(repos_json or '[]')            
+  #                # Exit early if nothing changed
+  #               if not changed_repos:
+  #                 print("🛑 No repositories changed. Skipping.")
+  #                 sys.exit(0)
                 
-                matrix = []
+  #               matrix = []
             
-                for repo in changed_repos:
-                    try:
-                        default_branch = get_default_branch(repo)
-                        active = set(get_active_branches(repo))
-                        active.add(default_branch)
-                        for branch in sorted(active):
-                            matrix.append({"repo": repo, "branch": branch})
-                    except Exception as e:
-                        print(f"⚠️ Failed to process repo {repo}: {e}", file=sys.stderr)
+  #               for repo in changed_repos:
+  #                   try:
+  #                       default_branch = get_default_branch(repo)
+  #                       active = set(get_active_branches(repo))
+  #                       active.add(default_branch)
+  #                       for branch in sorted(active):
+  #                           matrix.append({"repo": repo, "branch": branch})
+  #                   except Exception as e:
+  #                       print(f"⚠️ Failed to process repo {repo}: {e}", file=sys.stderr)
             
-                # final_matrix=json.dumps(matrix)
-                print(json.dumps(matrix))
-            if __name__ == "__main__":
-                main()
-            EOF
-            )
-            # compact=$(echo "$final_matrix" | jq -c .)
-            # echo "matrix=$compact" >> "$GITHUB_OUTPUT"
-            # Save output
-            echo "Raw matrix JSON: $final_matrix"
+  #               # final_matrix=json.dumps(matrix)
+  #               print(json.dumps(matrix))
+  #           if __name__ == "__main__":
+  #               main()
+  #           EOF
+  #           )
+  #           # compact=$(echo "$final_matrix" | jq -c .)
+  #           # echo "matrix=$compact" >> "$GITHUB_OUTPUT"
+  #           # Save output
+  #           echo "Raw matrix JSON: $final_matrix"
             
-            # Validate and compress JSON
-            compact=$(echo "$final_matrix" | jq -c .)
-            echo "matrix=$compact" >> "$GITHUB_OUTPUT"
-            # echo "matrix=$(echo "$final_matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
+  #           # Validate and compress JSON
+  #           compact=$(echo "$final_matrix" | jq -c .)
+  #           echo "matrix=$compact" >> "$GITHUB_OUTPUT"
+  #           # echo "matrix=$(echo "$final_matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
-        env:
-            GITHUB_TOKEN: ${{ secrets.TOKEN }}
-            REPOS: ${{ steps.changed-repos.outputs.repos }}
-      - name: Print out
-        run: |
-          echo "Repos:"
-          echo ${{ steps.changed-repos.outputs.repos }}
-          echo "Matrix:"
-          echo "${{ steps.set-matrix.outputs.matrix }}"
+  #       env:
+  #           GITHUB_TOKEN: ${{ secrets.TOKEN }}
+  #           REPOS: ${{ steps.changed-repos.outputs.repos }}
+  #     - name: Print out
+  #       run: |
+  #         echo "Repos:"
+  #         echo ${{ steps.changed-repos.outputs.repos }}
+  #         echo "Matrix:"
+  #         echo "${{ steps.set-matrix.outputs.matrix }}"
+  # sync-owners:
+  #   runs-on: ubuntu-latest
+  #   needs: build-matrix
+  #   strategy:
+  #     matrix:
+  #       include: ${{ fromJson(needs.build-matrix.outputs.repos) }}
+  #   steps:
+  #     - name: Set up Git
+  #       run: |
+  #         git config --global user.name "github-actions"
+  #         git config --global user.email "actions@github.com"
+  
+  #     - name: Checkout hack repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         path: hack
+  
+  #     - name: Checkout target repo (forked)
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: ${{ env.FORK_ORG_NAME }}/${{ matrix.repo }}
+  #         ref: ${{ matrix.branch }}
+  #         token: ${{ secrets.TOKEN_FORKED }}
+  #         path: forked-${{ matrix.repo }}
+  
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #           python-version: '3.x'
+  #           working-directory: forked-${{ matrix.repo }}
+
+  #     - name: Install Python dependencies
+  #       run: |
+  #           pip install pyyaml
+  #       working-directory: forked-${{ matrix.repo }}
+
+  #     - name: Create new branch and update OWNERS
+  #       run: |
+  #         # cd forked-${{ matrix.repo }}
+  #         # git fetch upstream ${{ matrix.branch }}
+  #         # branch_Name=${{ matrix.branch }}-hackrepo-${{ github.event.pull_request.number }}
+  #         # git checkout -b $branch_Name upstream/${{ matrix.branch }}
+  
+  #         echo "🔧 Running generating owners..."
+  #         python3 <<EOF
+  #           import os
+  #           import sys
+  #           import yaml    
+
+  #           def generate_owners_file(repo_name, access_control):
+  #             admins = access_control.get('admins', [])
+  #             repos = access_control.get('repos', {})
+  #             repo_info = repos.get(repo_name, {})
+  #             # Safely default reviewers and approvers to empty lists
+  #             repo_reviewers = repo_info.get('reviewers') or []
+  #             repo_approvers = repo_info.get('approvers') or []
+      
+  #             reviewers = set(repo_reviewers + admins)
+  #             approvers = set(repo_approvers + admins)
+  #             # Validation: must have at least one reviewer and one approver
+  #             if not reviewers:
+  #                 raise ValueError(f"❌ No reviewers found for repo {repo_name} after adding admins.")
+  #             if not approvers:
+  #                 raise ValueError(f"❌ No approvers found for repo {repo_name} after adding admins.")
+  #             owners_content = {
+  #                 'reviewers': sorted(reviewers),
+  #                 'approvers': sorted(approvers)
+  #             }
+          
+  #             with open('OWNERS', 'w') as f:
+  #                 f.write("# This OWNERS file is auto-generated by GitHub Action from hack access-control.yaml\n")
+  #                 yaml.dump(owners_content, f, default_flow_style=False)
+          
+  #             print(f"✅ Successfully generated OWNERS file for {repo_name}")
+
+  #           def validate_owners_file():
+  #             with open('OWNERS') as f:
+  #                 owners = yaml.safe_load(f)
+          
+  #             if not isinstance(owners, dict):
+  #                 raise ValueError("❌ OWNERS file is not a valid YAML dictionary.")
+  #             if 'reviewers' not in owners or 'approvers' not in owners:
+  #                 raise ValueError("❌ OWNERS file must contain 'reviewers' and 'approvers' sections.")
+          
+  #             for field in ['reviewers', 'approvers']:
+  #                 if not isinstance(owners[field], list):
+  #                     raise ValueError(f"❌ '{field}' must be a list of strings.")
+  #                 if not owners[field]:
+  #                     raise ValueError(f"❌ '{field}' must not be empty.")
+  #                 for user in owners[field]:
+  #                     if not isinstance(user, str):
+  #                         raise ValueError(f"❌ '{field}' must be a list of strings.")
+          
+  #             print("✅ OWNERS file validation successful!")
+  #           # ---- main ----
+  #           repo_name = os.environ.get("REPO_NAME")
+  #           if not repo_name:
+  #               print("❌ Environment variable REPO_NAME not set")
+  #               sys.exit(1)
+            
+  #           access_control_path = os.environ.get("ACCESS_CONTROL_PATH", "../hack/config/access-control.yaml")
+  #           if not os.path.isfile(access_control_path):
+  #               print(f"❌ Access control file not found at: {access_control_path}")
+  #               sys.exit(1)
+            
+  #           print(f"🔵 Generating OWNERS for repo: {repo_name} using config: {access_control_path}")
+            
+  #           with open(access_control_path) as f:
+  #               access_control = yaml.safe_load(f)
+            
+  #           generate_owners_file(repo_name, access_control)
+  #           validate_owners_file()
+  #           EOF
+          
+  #         echo "📁 OWNERS content:"
+  #         cat OWNERS
+
+  #         # git add OWNERS
+  #         # git commit -m "Update OWNERS file as change in hack/config/access-control.yaml"
+  #         # git push origin ${{ steps.branch.outputs.name }}
+  #       working-directory: forked-${{ matrix.repo }}
+  #       env:
+  #         REPO_NAME: ${{ matrix.repo }}
+  #         ACCESS_CONTROL_PATH: ../hack/config/access-control.yaml
+
+  #     - name: Create PR
+  #       uses: peter-evans/create-pull-request@v7
+  #       with:
+  #         token: ${{ secrets.TOEKN_FORKED }}
+  #         commit-message: "Update OWNERS file as changes detected at hack/config/access-control.yaml"
+  #         branch: ${{ matrix.branch }}-hackrepo-${{ github.event.pull_request.number }}
+  #         base: ${{ matrix.branch }}
+  #         path: forked-${{ matrix.repo }}
+  #         title: "Update OWNERS file"
+  #         body: |
+  #           This PR updates the OWNERS file in `${{ matrix.repo }}` branch `${{ matrix.branch }}`.
+  #           It is auto-generated by the `owner-management` GitHub Action.
   sync-owners:
-    runs-on: ubuntu-latest
     needs: build-matrix
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        include: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+        repo: ${{ fromJson(needs.build-matrix.outputs.repos) }}
     steps:
       - name: Set up Git
         run: |
@@ -220,126 +357,105 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: hack
-  
-      - name: Checkout target repo (forked)
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.FORK_ORG_NAME }}/${{ matrix.repo }}
-          ref: ${{ matrix.branch }}
-          token: ${{ secrets.TOKEN_FORKED }}
-          path: forked-${{ matrix.repo }}
-  
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-            python-version: '3.x'
-            working-directory: forked-${{ matrix.repo }}
+          python-version: '3.x'
+  #       working-directory: forked-${{ matrix.repo }}
 
       - name: Install Python dependencies
-        run: |
-            pip install pyyaml
-        working-directory: forked-${{ matrix.repo }}
+        run: pip install pyyaml requests python-dateutil
 
-      - name: Create new branch and update OWNERS
+      - name: Process repo branches inline
         run: |
-          # cd forked-${{ matrix.repo }}
-          # git fetch upstream ${{ matrix.branch }}
-          # branch_Name=${{ matrix.branch }}-hackrepo-${{ github.event.pull_request.number }}
-          # git checkout -b $branch_Name upstream/${{ matrix.branch }}
-  
-          echo "🔧 Running generating owners..."
           python3 <<EOF
-            import os
-            import sys
-            import yaml    
+          import os
+          import sys
+          import requests
+          import yaml
+          from datetime import datetime, timedelta, timezone
+          from dateutil import parser
+          import subprocess
+          
+          ORG = os.getenv("ORG_NAME")
+          FORK_ORG = os.getenv("FORK_ORG_NAME")
+          TOKEN = os.getenv("GITHUB_TOKEN")
+          REPO = os.getenv("REPO")
+          DAYS_ACTIVE = int(os.getenv("BRANCH_ACTIVE_DAYS", 90))
+          CUTOFF = datetime.now(timezone.utc) - timedelta(days=DAYS_ACTIVE)
+          HEADERS = {"Authorization": f"token {TOKEN}"}
+          if not TOKEN or not ORG:
+              print("❌ GITHUB_TOKEN or ORG_NAME not set in environment")
+              sys.exit(1)
+  
+          def gh_api(url):
+              resp = requests.get(url, headers=HEADERS)
+              resp.raise_for_status()
+              return resp.json()
+    
+          def get_branches(repo):
+              url = f"https://api.github.com/repos/{ORG}/{repo}/branches?per_page=100"
+              return gh_api(url)
 
-            def generate_owners_file(repo_name, access_control):
+          def get_commit_date(commit_url):
+              commit = gh_api(commit_url)
+              return parser.isoparse(commit["commit"]["committer"]["date"])
+
+          def generate_owners(repo_name, access_control):
               admins = access_control.get('admins', [])
-              repos = access_control.get('repos', {})
-              repo_info = repos.get(repo_name, {})
-              # Safely default reviewers and approvers to empty lists
-              repo_reviewers = repo_info.get('reviewers') or []
-              repo_approvers = repo_info.get('approvers') or []
-      
-              reviewers = set(repo_reviewers + admins)
-              approvers = set(repo_approvers + admins)
-              # Validation: must have at least one reviewer and one approver
-              if not reviewers:
-                  raise ValueError(f"❌ No reviewers found for repo {repo_name} after adding admins.")
-              if not approvers:
-                  raise ValueError(f"❌ No approvers found for repo {repo_name} after adding admins.")
-              owners_content = {
-                  'reviewers': sorted(reviewers),
-                  'approvers': sorted(approvers)
-              }
-          
-              with open('OWNERS', 'w') as f:
-                  f.write("# This OWNERS file is auto-generated by GitHub Action from hack access-control.yaml\n")
-                  yaml.dump(owners_content, f, default_flow_style=False)
-          
-              print(f"✅ Successfully generated OWNERS file for {repo_name}")
+              repo_info = access_control.get('repos', {}).get(repo_name, {})
+              reviewers = sorted(set(repo_info.get('reviewers', []) + admins))
+              approvers = sorted(set(repo_info.get('approvers', []) + admins))
+              if not reviewers or not approvers:
+                  raise ValueError("Missing reviewers or approvers")
+              with open("OWNERS", "w") as f:
+                  f.write("# Auto-generated OWNERS file\n")
+                  yaml.dump({"reviewers": reviewers, "approvers": approvers}, f)
 
-            def validate_owners_file():
-              with open('OWNERS') as f:
-                  owners = yaml.safe_load(f)
+          def create_pr(head,branch):
+              subprocess.run(["git", "checkout", "-b", branch], check=True)
+              subprocess.run(["git", "add", "OWNERS"], check=True)
+              subprocess.run(["git", "commit", "-m", "Update OWNERS file as change in hack/config/access-control.yaml"], check=True)
+              subprocess.run(["git", "push", "origin", branch], check=True)
+              subprocess.run([
+                  "gh", "pr", "create",
+                  "--repo", f"{FORK_ORG}/{REPO}",
+                  "--head", head,
+                  "--base", branch,
+                  "--title", "Update OWNERS",
+                  "--body", "This PR updates the OWNERS file."
+              ], check=True)
           
-              if not isinstance(owners, dict):
-                  raise ValueError("❌ OWNERS file is not a valid YAML dictionary.")
-              if 'reviewers' not in owners or 'approvers' not in owners:
-                  raise ValueError("❌ OWNERS file must contain 'reviewers' and 'approvers' sections.")
-          
-              for field in ['reviewers', 'approvers']:
-                  if not isinstance(owners[field], list):
-                      raise ValueError(f"❌ '{field}' must be a list of strings.")
-                  if not owners[field]:
-                      raise ValueError(f"❌ '{field}' must not be empty.")
-                  for user in owners[field]:
-                      if not isinstance(user, str):
-                          raise ValueError(f"❌ '{field}' must be a list of strings.")
-          
-              print("✅ OWNERS file validation successful!")
-            # ---- main ----
-            repo_name = os.environ.get("REPO_NAME")
-            if not repo_name:
-                print("❌ Environment variable REPO_NAME not set")
-                sys.exit(1)
+          access_control_path = os.environ.get("ACCESS_CONTROL_PATH", "../hack/config/access-control.yaml")
+          if not os.path.isfile(access_control_path):
+            print(f"❌ Access control file not found at: {access_control_path}")
+            sys.exit(1)
             
-            access_control_path = os.environ.get("ACCESS_CONTROL_PATH", "../hack/config/access-control.yaml")
-            if not os.path.isfile(access_control_path):
-                print(f"❌ Access control file not found at: {access_control_path}")
-                sys.exit(1)
-            
-            print(f"🔵 Generating OWNERS for repo: {repo_name} using config: {access_control_path}")
-            
-            with open(access_control_path) as f:
-                access_control = yaml.safe_load(f)
-            
-            generate_owners_file(repo_name, access_control)
-            validate_owners_file()
-            EOF
-          
-          echo "📁 OWNERS content:"
-          cat OWNERS
+          with open("hack/config/access-control.yaml") as f:
+              access_control = yaml.safe_load(f)
 
-          # git add OWNERS
-          # git commit -m "Update OWNERS file as change in hack/config/access-control.yaml"
-          # git push origin ${{ steps.branch.outputs.name }}
-        working-directory: forked-${{ matrix.repo }}
+          branches = get_branches(REPO)
+          for b in branches:
+              name = b["name"]
+              commit_date = get_commit_date(b["commit"]["url"])
+              if commit_date >= CUTOFF:
+                  clone_dir = f"forked-{REPO}"
+                  subprocess.run([
+                      "git", "clone",
+                      f"https://x-access-token:{TOKEN}@github.com/{FORK_ORG}/{REPO}.git",
+                      clone_dir
+                  ], check=True)
+                  os.chdir(clone_dir)
+                  subprocess.run(["git", "checkout", name], check=True)
+                  generate_owners(REPO, access_control)
+                  create_pr(name,f"{name}-hackrepo-${{ github.event.pull_request.number }}")
+                  os.chdir("..")
+          EOF
         env:
-          REPO_NAME: ${{ matrix.repo }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          REPO: ${{ matrix.repo }}
+          ORG_NAME: ${{ env.ORG_NAME }}
+          FORK_ORG_NAME: ${{ env.FORK_ORG_NAME }}
           ACCESS_CONTROL_PATH: ../hack/config/access-control.yaml
-
-      - name: Create PR
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.TOEKN_FORKED }}
-          commit-message: "Update OWNERS file as changes detected at hack/config/access-control.yaml"
-          branch: ${{ matrix.branch }}-hackrepo-${{ github.event.pull_request.number }}
-          base: ${{ matrix.branch }}
-          path: forked-${{ matrix.repo }}
-          title: "Update OWNERS file"
-          body: |
-            This PR updates the OWNERS file in `${{ matrix.repo }}` branch `${{ matrix.branch }}`.
-            It is auto-generated by the `owner-management` GitHub Action.
-
       
