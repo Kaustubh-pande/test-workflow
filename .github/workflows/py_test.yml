@@ -179,25 +179,30 @@ jobs:
                     except Exception as e:
                         print(f"⚠️ Failed to process repo {repo}: {e}", file=sys.stderr)
             
-                final_matrix=json.dumps(matrix)
-                print(final_matrix)
+                # final_matrix=json.dumps(matrix)
+                print(json.dumps(matrix))
             if __name__ == "__main__":
                 main()
             EOF
             )
             # compact=$(echo "$final_matrix" | jq -c .)
             # echo "matrix=$compact" >> "$GITHUB_OUTPUT"
-
-            echo "matrix=$(echo "$final_matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
+            # Save output
+            echo "Raw matrix JSON: $final_matrix"
+            
+            # Validate and compress JSON
+            compact=$(echo "$final_matrix" | jq -c .)
+            echo "matrix=$compact" >> "$GITHUB_OUTPUT"
+            # echo "matrix=$(echo "$final_matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
         env:
             GITHUB_TOKEN: ${{ secrets.TOKEN }}
             REPOS: ${{ steps.changed-repos.outputs.repos }}
       - name: Print out
         run: |
-          echo "Repos:\n"
+          echo "Repos:"
           echo ${{ steps.changed-repos.outputs.repos }}
-          echo "Matrix:\n"
+          echo "Matrix:"
           echo "${{ steps.set-matrix.outputs.matrix }}"
   sync-owners:
     runs-on: ubuntu-latest
