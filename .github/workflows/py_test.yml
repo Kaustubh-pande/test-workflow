@@ -17,7 +17,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
-          repo: ${{ steps.changed-repos.outputs.repos }}
+          matrix: ${{ steps.changed-repos.outputs.repos }}
           # matrix: ${{ steps.set-matrix.outputs.matrix_b64 }}
 
     steps:
@@ -113,7 +113,12 @@ jobs:
               main()
           EOF
           )
-          echo "repos=${repos}" >> "$GITHUB_OUTPUT"
+
+          echo "Raw matrix JSON: $repos"
+            
+          compact=$(echo "$repos" | jq -c .)
+          echo "repos=$compact" >> "$GITHUB_OUTPUT"
+          # echo "repos=${repos}" >> "$GITHUB_OUTPUT"
 
   #     - name: Get active branches for changed repos
   #       id: set-matrix
