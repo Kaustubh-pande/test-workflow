@@ -185,8 +185,11 @@ jobs:
                 main()
             EOF
             )
-            compact=$(echo "$final_matrix" | jq -c .)
-            echo "matrix=$compact" >> "$GITHUB_OUTPUT"
+            # compact=$(echo "$final_matrix" | jq -c .)
+            # echo "matrix=$compact" >> "$GITHUB_OUTPUT"
+
+            echo "matrix=$(echo "$final_matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
+
         env:
             GITHUB_TOKEN: ${{ secrets.TOKEN }}
             REPOS: ${{ steps.changed-repos.outputs.repos }}
