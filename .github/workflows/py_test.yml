@@ -101,7 +101,7 @@ jobs:
                   old_repo = old_repos.get(repo, {})
                   new_repo = new_repos.get(repo, {})
                   if repo_access_changed(old_repo, new_repo):
-                      changed_repos.append(repo)
+                      changed_repos.append(append({"repo": repo}))
               changed_repos = json.dumps(sorted(changed_repos))
               if not changed_repos:
                   print("🛑 No repositories changed. Skipping.")
