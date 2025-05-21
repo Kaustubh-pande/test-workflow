@@ -382,7 +382,7 @@ jobs:
           ORG_NAME:  ${{ env.ORG_NAME }}
           FORK_ORG_NAME:  ${{ env.FORK_ORG_NAME }}
           BRANCH_ACTIVE_DAYS: 90
-          ACCESS_CONTROL_PATH:  ../hack/config/access-control.yaml
+          ACCESS_CONTROL_PATH:  hack/config/access-control.yaml
         run: |
           python3 <<EOF
           import os
@@ -398,7 +398,7 @@ jobs:
           TOKEN = os.getenv("GITHUB_TOKEN")
           REPO = os.getenv("REPO_NAME")
           DAYS_ACTIVE = int(os.getenv("BRANCH_ACTIVE_DAYS", 90))
-          print("Print:===",ORG,FORK_ORG,)
+          print("Print:===",ORG,FORK_ORG,REPO)
           CUTOFF = datetime.now(timezone.utc) - timedelta(days=DAYS_ACTIVE)
           HEADERS = {"Authorization": f"token {TOKEN}"}
           if not TOKEN or not ORG:
