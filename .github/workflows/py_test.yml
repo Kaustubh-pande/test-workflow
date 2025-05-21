@@ -352,7 +352,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        repo: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+        include: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+      # matrix:
+      #   repo: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
     steps:
       - name: Set up Git
         run: |
@@ -379,6 +381,7 @@ jobs:
           REPO_NAME:  ${{ matrix.repo }}
           ORG_NAME:  ${{ env.ORG_NAME }}
           FORK_ORG_NAME:  ${{ env.FORK_ORG_NAME }}
+          BRANCH_ACTIVE_DAYS: 90
           ACCESS_CONTROL_PATH:  ../hack/config/access-control.yaml
         run: |
           python3 <<EOF
@@ -395,6 +398,7 @@ jobs:
           TOKEN = os.getenv("GITHUB_TOKEN")
           REPO = os.getenv("REPO_NAME")
           DAYS_ACTIVE = int(os.getenv("BRANCH_ACTIVE_DAYS", 90))
+          print("Print:===",ORG,FORK_ORG,)
           CUTOFF = datetime.now(timezone.utc) - timedelta(days=DAYS_ACTIVE)
           HEADERS = {"Authorization": f"token {TOKEN}"}
           if not TOKEN or not ORG:
