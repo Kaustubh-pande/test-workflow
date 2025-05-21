@@ -473,19 +473,19 @@ jobs:
               name = b["name"]
               commit_date = get_commit_date(b["commit"]["url"])
               if commit_date >= CUTOFF:
-                  # clone_dir = f"forked-{REPO}"
-                  # subprocess.run([
-                  #     "git", "clone",
-                  #     f"https://x-access-token:{TOKEN}@github.com/{FORK_ORG}/{REPO}.git",
-                  #     clone_dir
-                  # ], check=True)
                   os.chdir(clone_dir)
 
                   # Reset any existing local changes and checkout the branch cleanly
                   subprocess.run(["git", "reset", "--hard"], check=True)
                   subprocess.run(["git", "clean", "-fd"], check=True)
-                  subprocess.run(["git", "fetch", "origin"], check=True)
-                  subprocess.run(["git", "checkout", name], check=True)
+                  subprocess.run(["git", "fetch", "--all"], check=True)
+                  # Use safe checkout
+                  try:
+                    subprocess.run(["git", "checkout", "-b", name, f"origin/{name}"], check=True)
+                  except subprocess.CalledProcessError:
+                    print(f"❌ Failed to checkout branch {name}, skipping.")
+                    os.chdir("..")
+                    continue
                   print(f"Creating PR branch: {name}-hackrepo-{PR_NUMBER}")
 
                   generate_owners(REPO, access_control)
