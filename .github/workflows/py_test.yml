@@ -374,6 +374,12 @@ jobs:
         run: pip install pyyaml requests python-dateutil
 
       - name: Process repo branches inline
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          REPO: ${{ matrix.repo }}
+          ORG_NAME: ${{ env.ORG_NAME }}
+          FORK_ORG_NAME: ${{ env.FORK_ORG_NAME }}
+          ACCESS_CONTROL_PATH: ../hack/config/access-control.yaml
         run: |
           python3 <<EOF
           import os
@@ -457,11 +463,4 @@ jobs:
                   generate_owners(REPO, access_control)
                   create_pr(name,f"{name}-hackrepo-${{ github.event.pull_request.number }}")
                   os.chdir("..")
-          EOF
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-          REPO: ${{ matrix.repo }}
-          ORG_NAME: ${{ env.ORG_NAME }}
-          FORK_ORG_NAME: ${{ env.FORK_ORG_NAME }}
-          ACCESS_CONTROL_PATH: ../hack/config/access-control.yaml
-      
+          EOF      
