@@ -383,6 +383,7 @@ jobs:
           FORK_ORG_NAME:  ${{ env.FORK_ORG_NAME }}
           BRANCH_ACTIVE_DAYS: 90
           ACCESS_CONTROL_PATH:  hack/config/access-control.yaml
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           python3 <<EOF
           import os
@@ -397,8 +398,9 @@ jobs:
           FORK_ORG = os.getenv("FORK_ORG_NAME")
           TOKEN = os.getenv("GITHUB_TOKEN")
           REPO = os.getenv("REPO_NAME")
+          PR_NUMBER = os.getenv("PR_NUMBER")
           DAYS_ACTIVE = int(os.getenv("BRANCH_ACTIVE_DAYS", 90))
-          print("Print:===",ORG,FORK_ORG,REPO)
+          print("Print:===",ORG,FORK_ORG,REPO,PR_NUMBER)
           CUTOFF = datetime.now(timezone.utc) - timedelta(days=DAYS_ACTIVE)
           HEADERS = {"Authorization": f"token {TOKEN}"}
           if not TOKEN or not ORG:
@@ -443,7 +445,7 @@ jobs:
                   "--body", "This PR updates the OWNERS file."
               ], check=True)
           
-          access_control_path = os.environ.get("ACCESS_CONTROL_PATH", "../hack/config/access-control.yaml")
+          access_control_path = os.environ.get("ACCESS_CONTROL_PATH", "hack/config/access-control.yaml")
           if not os.path.isfile(access_control_path):
             print(f"❌ Access control file not found at: {access_control_path}")
             sys.exit(1)
@@ -465,6 +467,6 @@ jobs:
                   os.chdir(clone_dir)
                   subprocess.run(["git", "checkout", name], check=True)
                   generate_owners(REPO, access_control)
-                  create_pr(name,f"{name}-hackrepo-${{ github.event.pull_request.number }}")
+                  create_pr(name,f"{name}-hackrepo-{PR_NUMBER}")
                   os.chdir("..")
           EOF      
