@@ -431,6 +431,9 @@ jobs:
               with open("OWNERS", "w") as f:
                   f.write("# Auto-generated OWNERS file\n")
                   yaml.dump({"reviewers": reviewers, "approvers": approvers}, f)
+          def remote_branch_exists(branch_name):
+              result = subprocess.run(["git", "ls-remote", "--heads", "origin", branch_name], capture_output=True, text=True)
+              return bool(result.stdout.strip())
 
           def create_pr(base,branch):
               print(f"Inside create_pr: base={base} branch={branch}")
@@ -457,7 +460,7 @@ jobs:
               access_control = yaml.safe_load(f)
 
           branches = get_branches(REPO)
-          print("Print debug 3 branch",branches)
+          print("Print debug 3 branch")
 
           # Clone repo once
           clone_dir = f"forked-{REPO}"
@@ -479,13 +482,20 @@ jobs:
                   subprocess.run(["git", "reset", "--hard"], check=True)
                   subprocess.run(["git", "clean", "-fd"], check=True)
                   subprocess.run(["git", "fetch", "--all"], check=True)
-                  # Use safe checkout
-                  try:
-                    subprocess.run(["git", "checkout", "-b", name, f"origin/{name}"], check=True)
-                  except subprocess.CalledProcessError as e:
-                    print(f"❌ Failed to checkout branch {name}. Error: {e}")
-                    os.chdir("..")
-                    continue
+
+
+                  if remote_branch_exists(name):
+                    try:
+                        subprocess.run(["git", "checkout", "-b", name, f"origin/{name}"], check=True)
+                    except subprocess.CalledProcessError as e:
+                        print(f"❌ Failed to checkout branch {name}. Error: {e}")
+                        os.chdir("..")
+                        continue
+                  else:
+                      print(f"❌ Remote branch origin/{name} does not exist, skipping.")
+                      os.chdir("..")
+                      continue
+
                   print(f"Creating PR branch: {name}-hackrepo-{PR_NUMBER}")
 
                   generate_owners(REPO, access_control)
