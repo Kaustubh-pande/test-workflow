@@ -388,6 +388,7 @@ jobs:
           python3 <<EOF
           import os
           import sys
+          import shutil
           import requests
           import yaml
           from datetime import datetime, timedelta, timezone
@@ -454,18 +455,33 @@ jobs:
               access_control = yaml.safe_load(f)
 
           branches = get_branches(REPO)
+          # Clone repo once
+          clone_dir = f"forked-{REPO}"
+          if os.path.exists(clone_dir):
+              shutil.rmtree(clone_dir)
+          subprocess.run([
+              "git", "clone",
+              f"https://x-access-token:{TOKEN}@github.com/{FORK_ORG}/{REPO}.git",
+              clone_dir
+          ], check=True)
           for b in branches:
               name = b["name"]
               commit_date = get_commit_date(b["commit"]["url"])
               if commit_date >= CUTOFF:
-                  clone_dir = f"forked-{REPO}"
-                  subprocess.run([
-                      "git", "clone",
-                      f"https://x-access-token:{TOKEN}@github.com/{FORK_ORG}/{REPO}.git",
-                      clone_dir
-                  ], check=True)
+                  # clone_dir = f"forked-{REPO}"
+                  # subprocess.run([
+                  #     "git", "clone",
+                  #     f"https://x-access-token:{TOKEN}@github.com/{FORK_ORG}/{REPO}.git",
+                  #     clone_dir
+                  # ], check=True)
                   os.chdir(clone_dir)
+
+                  # Reset any existing local changes and checkout the branch cleanly
+                  subprocess.run(["git", "reset", "--hard"], check=True)
+                  subprocess.run(["git", "clean", "-fd"], check=True)
+                  subprocess.run(["git", "fetch", "origin"], check=True)
                   subprocess.run(["git", "checkout", name], check=True)
+
                   generate_owners(REPO, access_control)
                   create_pr(name,f"{name}-hackrepo-{PR_NUMBER}")
                   os.chdir("..")
