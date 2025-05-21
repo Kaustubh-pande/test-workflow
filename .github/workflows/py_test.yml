@@ -447,16 +447,18 @@ jobs:
                   "--title", "Update OWNERS",
                   "--body", "This PR updates the OWNERS file."
               ], check=True)
-          
+          print("Print debug 1")
           access_control_path = os.environ.get("ACCESS_CONTROL_PATH", "hack/config/access-control.yaml")
           if not os.path.isfile(access_control_path):
             print(f"❌ Access control file not found at: {access_control_path}")
             sys.exit(1)
-            
+          print("Print debug 2")
           with open("hack/config/access-control.yaml") as f:
               access_control = yaml.safe_load(f)
 
           branches = get_branches(REPO)
+          print("Print debug 3 branch",branches)
+
           # Clone repo once
           clone_dir = f"forked-{REPO}"
           if os.path.exists(clone_dir):
@@ -467,6 +469,7 @@ jobs:
               clone_dir
           ], check=True)
           for b in branches:
+              print("Print debug 4 loop",b)
               name = b["name"]
               commit_date = get_commit_date(b["commit"]["url"])
               if commit_date >= CUTOFF:
@@ -489,4 +492,4 @@ jobs:
                   newBranchName = f"{name}-hackrepo-{PR_NUMBER}"
                   create_pr(name,newBranchName)
                   os.chdir("..")
-          EOF      
+          EOF
