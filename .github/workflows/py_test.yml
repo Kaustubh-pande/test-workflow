@@ -431,7 +431,7 @@ jobs:
                   f.write("# Auto-generated OWNERS file\n")
                   yaml.dump({"reviewers": reviewers, "approvers": approvers}, f)
 
-          def create_pr(head,branch):
+          def create_pr(base,branch):
               subprocess.run(["git", "checkout", "-b", branch], check=True)
               subprocess.run(["git", "add", "OWNERS"], check=True)
               subprocess.run(["git", "commit", "-m", "Update OWNERS file as change in hack/config/access-control.yaml"], check=True)
@@ -439,8 +439,8 @@ jobs:
               subprocess.run([
                   "gh", "pr", "create",
                   "--repo", f"{FORK_ORG}/{REPO}",
-                  "--head", head,
-                  "--base", branch,
+                  "--head", branch,
+                  "--base", base,
                   "--title", "Update OWNERS",
                   "--body", "This PR updates the OWNERS file."
               ], check=True)
