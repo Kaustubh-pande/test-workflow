@@ -433,6 +433,8 @@ jobs:
                   yaml.dump({"reviewers": reviewers, "approvers": approvers}, f)
 
           def create_pr(base,branch):
+              print(f"Inside create_pr: base={base} branch={branch}")
+
               subprocess.run(["git", "checkout", "-b", branch], check=True)
               subprocess.run(["git", "add", "OWNERS"], check=True)
               subprocess.run(["git", "commit", "-m", "Update OWNERS file as change in hack/config/access-control.yaml"], check=True)
@@ -481,8 +483,10 @@ jobs:
                   subprocess.run(["git", "clean", "-fd"], check=True)
                   subprocess.run(["git", "fetch", "origin"], check=True)
                   subprocess.run(["git", "checkout", name], check=True)
+                  print(f"Creating PR branch: {name}-hackrepo-{PR_NUMBER}")
 
                   generate_owners(REPO, access_control)
-                  create_pr(name,f"{name}-hackrepo-{PR_NUMBER}")
+                  newBranchName = f"{name}-hackrepo-{PR_NUMBER}"
+                  create_pr(name,newBranchName)
                   os.chdir("..")
           EOF      
