@@ -482,8 +482,8 @@ jobs:
                   # Use safe checkout
                   try:
                     subprocess.run(["git", "checkout", "-b", name, f"origin/{name}"], check=True)
-                  except subprocess.CalledProcessError:
-                    print(f"❌ Failed to checkout branch {name}, skipping.")
+                  except subprocess.CalledProcessError as e:
+                    print(f"❌ Failed to checkout branch {name}. Error: {e}")
                     os.chdir("..")
                     continue
                   print(f"Creating PR branch: {name}-hackrepo-{PR_NUMBER}")
