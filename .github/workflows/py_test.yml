@@ -375,11 +375,11 @@ jobs:
 
       - name: Process repo branches inline
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-          REPO: ${{ matrix.repo }}
-          ORG_NAME: ${{ env.ORG_NAME }}
-          FORK_ORG_NAME: ${{ env.FORK_ORG_NAME }}
-          ACCESS_CONTROL_PATH: ../hack/config/access-control.yaml
+          GITHUB_TOKEN:  ${{ secrets.TOKEN }}
+          REPO_NAME:  ${{ matrix.repo }}
+          ORG_NAME:  ${{ env.ORG_NAME }}
+          FORK_ORG_NAME:  ${{ env.FORK_ORG_NAME }}
+          ACCESS_CONTROL_PATH:  ../hack/config/access-control.yaml
         run: |
           python3 <<EOF
           import os
@@ -393,7 +393,7 @@ jobs:
           ORG = os.getenv("ORG_NAME")
           FORK_ORG = os.getenv("FORK_ORG_NAME")
           TOKEN = os.getenv("GITHUB_TOKEN")
-          REPO = os.getenv("REPO")
+          REPO = os.getenv("REPO_NAME")
           DAYS_ACTIVE = int(os.getenv("BRANCH_ACTIVE_DAYS", 90))
           CUTOFF = datetime.now(timezone.utc) - timedelta(days=DAYS_ACTIVE)
           HEADERS = {"Authorization": f"token {TOKEN}"}
