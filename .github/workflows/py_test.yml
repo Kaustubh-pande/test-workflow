@@ -450,15 +450,16 @@ jobs:
                 ], check=True)
               except subprocess.CalledProcessError as err:
                 push_failed = True
-                print(f"❌ Error creating PR branch {new_branch_name}: {err}")
+                print(f"❌ Error creating PR branch {branch}: {err}")
                 raise
               finally:
                 if push_failed:
                     print(f"🧹 Cleaning up remote branch: {branch}")
                     try:
                       subprocess.run(["git", "push", "origin","--delete", branch], check=True)
+                      print(f"🧹remote branch deleted!: {branch}")
                     except subprocess.CalledProcessError as cleanup_err:
-                        print(f"⚠️ Failed to delete remote branch {new_branch_name}: {cleanup_err}")
+                        print(f"⚠️ Failed to delete remote branch {branch}: {cleanup_err}")
 
           print("Print debug 1")
           
