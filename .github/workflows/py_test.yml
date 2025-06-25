@@ -431,9 +431,23 @@ jobs:
               with open("OWNERS", "w") as f:
                   f.write("# Auto-generated OWNERS file\n")
                   yaml.dump({"reviewers": reviewers, "approvers": approvers}, f)
-          def remote_branch_exists(branch_name):
-              result = subprocess.run(["git", "ls-remote", "--heads", "origin", branch_name], capture_output=True, text=True)
-              return bool(result.stdout.strip())
+    
+          # def setup_branch(branch):
+          #     subprocess.run(["git", "remote", "add", "upstream", f"https://github.com/{ORG}/{REPO}.git"], check=True)
+          #     subprocess.run(["git", "fetch", "upstream", branch], check=True)
+          #     result = subprocess.run( ["git", "ls-remote", "--heads", "upstream", branch],capture_output=True, text=True)
+          #     if result.stdout:
+          #       subprocess.run(["git", "checkout", "-b", branch, f"upstream/{branch}"], check=True)
+          #     else:
+          #       print(f"❌ Remote branch upstream/{branch} does not exist.")
+              # subprocess.run(["git", "checkout", branch, f"upstream/{branch}"], check=True)
+
+          # def remote_branch_exists(branch_name):
+          #     result = subprocess.run(["git", "ls-remote", "--heads", "origin", branch_name], capture_output=True, text=True)
+          #     return bool(result.stdout.strip())
+          # def local_branch_exists(branch_name):
+          #     result = subprocess.run(["git", "branch", "--list", branch_name], capture_output=True, text=True)
+          #     return bool(result.stdout.strip())
 
           def create_pr(base,branch):
               print(f"Inside create_pr: base={base} branch={branch}")
@@ -450,13 +464,16 @@ jobs:
                   "--title", "Update OWNERS",
                   "--body", "This PR updates the OWNERS file."
               ], check=True)
+
           print("Print debug 1")
+          
           access_control_path = os.environ.get("ACCESS_CONTROL_PATH", "hack/config/access-control.yaml")
           if not os.path.isfile(access_control_path):
             print(f"❌ Access control file not found at: {access_control_path}")
             sys.exit(1)
+          
           print("Print debug 2")
-          with open("hack/config/access-control.yaml") as f:
+          with open(access_control_path) as f:
               access_control = yaml.safe_load(f)
 
           branches = get_branches(REPO)
@@ -477,29 +494,34 @@ jobs:
               commit_date = get_commit_date(b["commit"]["url"])
               if commit_date >= CUTOFF:
                   os.chdir(clone_dir)
+                  print(f"🔁 Processing branch: {b}")
+                  try:
+                    # Reset any existing local changes and checkout the branch cleanly
+                    subprocess.run(["git", "reset", "--hard"], check=True)
+                    subprocess.run(["git", "clean", "-fd"], check=True)
+                    # subprocess.run(["git", "fetch", "--all"], check=True)
+                    # setup_branch(name)
+                    subprocess.run(["git", "remote", "remove", "upstream"], check=False)
+                    subprocess.run(["git", "remote", "add", "upstream", f"https://github.com/{ORG}/{REPO}.git"], check=True)
+                    result = subprocess.run( ["git", "ls-remote", "--heads", "upstream", branch],capture_output=True, text=True)
+                    if not result.stdout.strip():
+                      print(f"❌ Remote branch upstream/{branch} does not exist.")
+                      raise RuntimeError(f"Upstream branch '{branch}' not found.")
+                    
+                    subprocess.run(["git", "fetch", "upstream", branch], check=True)
+                    subprocess.run(["git", "checkout", "-B", branch, f"upstream/{branch}"], check=True)
 
-                  # Reset any existing local changes and checkout the branch cleanly
-                  subprocess.run(["git", "reset", "--hard"], check=True)
-                  subprocess.run(["git", "clean", "-fd"], check=True)
-                  subprocess.run(["git", "fetch", "--all"], check=True)
+                    print(f"Creating PR branch: {name}-hackrepo-{PR_NUMBER}")
+                    # Generate OWNERS + create PR
+                    generate_owners(REPO, access_control)
+                    newBranchName = f"{name}-hackrepo-{PR_NUMBER}"
+                    create_pr(name,newBranchName)
 
-
-                  if remote_branch_exists(name):
-                    try:
-                        subprocess.run(["git", "checkout", "-b", name, f"origin/{name}"], check=True)
-                    except subprocess.CalledProcessError as e:
-                        print(f"❌ Failed to checkout branch {name}. Error: {e}")
-                        os.chdir("..")
-                        continue
-                  else:
-                      print(f"❌ Remote branch origin/{name} does not exist, skipping.")
-                      os.chdir("..")
-                      continue
-
-                  print(f"Creating PR branch: {name}-hackrepo-{PR_NUMBER}")
-
-                  generate_owners(REPO, access_control)
-                  newBranchName = f"{name}-hackrepo-{PR_NUMBER}"
-                  create_pr(name,newBranchName)
-                  os.chdir("..")
+                  except subprocess.CalledProcessError as e:
+                    print(f"⚠️ Git error on branch {name}: {e}")
+                  except Exception as e:
+                    print(f"❌ Failed branch {name}: {e}")
+                  finally:
+                    os.chdir("..")
+          os.chdir("..")
           EOF
