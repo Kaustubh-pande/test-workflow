@@ -435,7 +435,7 @@ jobs:
           def create_pr(base,branch):
               print(f"Inside create_pr: base={base} branch={branch}")
 
-              subprocess.run(["git", "checkout", "-b", branch], check=True)
+              # subprocess.run(["git", "checkout", "-b", branch], check=True)
               subprocess.run(["git", "add", "OWNERS"], check=True)
               subprocess.run(["git", "commit", "-m", "Update OWNERS file as change in hack/config/access-control.yaml"], check=True)
               subprocess.run(["git", "push", "origin", branch], check=True)
@@ -480,6 +480,12 @@ jobs:
                   os.chdir(clone_dir)
                   print(f"🔁 Processing branch: {branch_name}")
                   try:
+                    # Sanitize base branch name (in case already has -hackrepo-N suffix)
+                    base_branch = branch_name
+                    if base_branch.endswith(f"-hackrepo-{PR_NUMBER}"):
+                        base_branch = base_branch.rsplit(f"-hackrepo-", 1)[0]
+                    new_branch = f"{base_branch}-hackrepo-{PR_NUMBER}"
+
                     # Reset any existing local changes and checkout the branch cleanly
                     subprocess.run(["git", "reset", "--hard"], check=True)
                     subprocess.run(["git", "clean", "-fd"], check=True)
@@ -493,13 +499,13 @@ jobs:
                       raise RuntimeError(f"Upstream branch '{branch_name}' not found.")
                     
                     subprocess.run(["git", "fetch", "upstream", branch_name], check=True)
-                    subprocess.run(["git", "checkout", "-B", branch_name, f"upstream/{branch_name}"], check=True)
+                    subprocess.run(["git", "checkout", "-B", new_branch, f"upstream/{base_branch}"], check=True)
 
-                    print(f"Creating PR branch: {branch_name}-hackrepo-{PR_NUMBER}")
+                    print(f"Creating PR branch: {new_branch}")
                     # Generate OWNERS + create PR
                     generate_owners(REPO, access_control)
-                    newBranchName = f"{branch_name}-hackrepo-{PR_NUMBER}"
-                    create_pr(branch_name,newBranchName)
+                    # newBranchName = f"{branch_name}-hackrepo-{PR_NUMBER}"
+                    create_pr(branch_name,new_branch)
 
                   except subprocess.CalledProcessError as e:
                     print(f"⚠️ Git error on branch {branch_name}: {e}")
