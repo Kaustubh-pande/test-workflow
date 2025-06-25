@@ -481,7 +481,7 @@ jobs:
               shutil.rmtree(clone_dir)
           subprocess.run([
               "git", "clone",
-              f"https://x-access-token:{TOKEN}@github.com/{FORK_ORG}/{REPO}.git",
+              f"https://x-access-token:{TOEKN_FORKED}@github.com/{FORK_ORG}/{REPO.lower()}.git",
               clone_dir
           ], check=True)
     
