@@ -378,6 +378,7 @@ jobs:
       - name: Process repo branches inline
         env:
           GITHUB_TOKEN:  ${{ secrets.TOKEN }}
+          GITHUB_FORKED_TOKEN: ${{ secrets.TOKEN_FORKED }}
           REPO_NAME:  ${{ matrix.repo }}
           ORG_NAME:  ${{ env.ORG_NAME }}
           FORK_ORG_NAME:  ${{ env.FORK_ORG_NAME }}
@@ -398,6 +399,8 @@ jobs:
           ORG = os.getenv("ORG_NAME")
           FORK_ORG = os.getenv("FORK_ORG_NAME")
           TOKEN = os.getenv("GITHUB_TOKEN")
+          FORK_TOKEN = os.getenv("GITHUB_FORKED_TOKEN")
+
           REPO = os.getenv("REPO_NAME")
           PR_NUMBER = os.getenv("PR_NUMBER")
           DAYS_ACTIVE = int(os.getenv("BRANCH_ACTIVE_DAYS", 90))
@@ -481,7 +484,7 @@ jobs:
               shutil.rmtree(clone_dir)
           subprocess.run([
               "git", "clone",
-              f"https://x-access-token:{TOEKN_FORKED}@github.com/{FORK_ORG}/{REPO.lower()}.git",
+              f"https://x-access-token:{FORK_TOKEN}@github.com/{FORK_ORG}/{REPO.lower()}.git",
               clone_dir
           ], check=True)
     
