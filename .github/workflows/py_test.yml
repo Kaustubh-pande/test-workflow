@@ -442,6 +442,13 @@ jobs:
                 # subprocess.run(["git", "checkout", "-b", branch], check=True)
                 subprocess.run(["git", "add", "OWNERS"], check=True)
                 subprocess.run(["git", "commit", "-m", "Update OWNERS file as change in hack/config/access-control.yaml"], check=True)
+                # Check if commit introduced changes
+                diff_result = subprocess.run(["git", "diff", "--cached"], capture_output=True, text=True)
+                if not diff_result.stdout.strip():
+                    print(f"🛑 No changes in OWNERS for {branch}, skipping PR creation.")
+                    return
+
+                
                 subprocess.run(["git", "push", "origin", branch], check=True)
                 subprocess.run([
                     "gh", "pr", "create",
@@ -454,15 +461,19 @@ jobs:
               except subprocess.CalledProcessError as err:
                 push_failed = True
                 print(f"❌ Error creating PR branch {branch}: {err}")
-                raise
               finally:
                 if push_failed:
                     print(f"🧹 Cleaning up remote branch: {branch}")
                     try:
                       subprocess.run(["git", "push", "origin","--delete", branch], check=True)
-                      print(f"🧹remote branch deleted!: {branch}")
+                      print(f"🧹 Remote branch deleted: {branch}")
                     except subprocess.CalledProcessError as cleanup_err:
-                        print(f"⚠️ Failed to delete remote branch {branch}: {cleanup_err}")
+                      if "remote ref does not exist" in str(cleanup_err).lower():
+                          print(f"🗑️ Branch {branch} already deleted or never pushed.")
+                      elif "permission denied" in str(cleanup_err).lower():
+                          print(f"🚫 No permission to delete branch {branch}.")
+                      else:
+                          print(f"⚠️ Failed to delete branch {branch}: {cleanup_err}")
 
           print("Print debug 1")
           
@@ -487,13 +498,19 @@ jobs:
               f"https://x-access-token:{FORK_TOKEN}@github.com/{FORK_ORG}/{REPO.lower()}.git",
               clone_dir
           ], check=True)
-    
+          repo_path = os.path.abspath(clone_dir)
+
           for b in branches:
               print("Print debug 4 loop",b)
               branch_name = b["name"]
+              # ⏭️ Skip hackrepo branches from past runs
+              if branch_name.endswith(f"-hackrepo-{PR_NUMBER}"):
+                print(f"⏭️ Skipping already-generated branch: {branch_name}")
+                continue
+              
               commit_date = get_commit_date(b["commit"]["url"])
               if commit_date >= CUTOFF:
-                  os.chdir(clone_dir)
+                  os.chdir(repo_path)
                   print(f"🔁 Processing branch: {branch_name}")
                   try:
                     # Sanitize base branch name (in case already has -hackrepo-N suffix)
