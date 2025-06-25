@@ -4,7 +4,7 @@ repos:
   TEST-WORKFLOW:
     approvers:
       - Kaustubh-pande
-      - n8
+      - n9
     reviewers:
       - Kaustubh-pande
       - bcz
