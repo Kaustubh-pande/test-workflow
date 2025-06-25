@@ -434,19 +434,31 @@ jobs:
 
           def create_pr(base,branch):
               print(f"Inside create_pr: base={base} branch={branch}")
-
-              # subprocess.run(["git", "checkout", "-b", branch], check=True)
-              subprocess.run(["git", "add", "OWNERS"], check=True)
-              subprocess.run(["git", "commit", "-m", "Update OWNERS file as change in hack/config/access-control.yaml"], check=True)
-              subprocess.run(["git", "push", "origin", branch], check=True)
-              subprocess.run([
-                  "gh", "pr", "create",
-                  "--repo", f"{FORK_ORG}/{REPO}",
-                  "--head", branch,
-                  "--base", base,
-                  "--title", "Update OWNERS",
-                  "--body", "This PR updates the OWNERS file."
-              ], check=True)
+              push_failed = False
+              try:
+                # subprocess.run(["git", "checkout", "-b", branch], check=True)
+                subprocess.run(["git", "add", "OWNERS"], check=True)
+                subprocess.run(["git", "commit", "-m", "Update OWNERS file as change in hack/config/access-control.yaml"], check=True)
+                subprocess.run(["git", "push", "origin", branch], check=True)
+                subprocess.run([
+                    "gh", "pr", "create",
+                    "--repo", f"{FORK_ORG}/{REPO}",
+                    "--head", branch,
+                    "--base", base,
+                    "--title", "Update OWNERS",
+                    "--body", "This PR updates the OWNERS file."
+                ], check=True)
+              except subprocess.CalledProcessError as err:
+                push_failed = True
+                print(f"❌ Error creating PR branch {new_branch_name}: {err}")
+                raise
+              finally:
+                if push_failed:
+                    print(f"🧹 Cleaning up remote branch: {branch}")
+                    try:
+                      subprocess.run(["git", "push", "origin","--delete", branch], check=True)
+                    except subprocess.CalledProcessError as cleanup_err:
+                        print(f"⚠️ Failed to delete remote branch {new_branch_name}: {cleanup_err}")
 
           print("Print debug 1")
           
