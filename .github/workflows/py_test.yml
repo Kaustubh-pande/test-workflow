@@ -431,23 +431,6 @@ jobs:
               with open("OWNERS", "w") as f:
                   f.write("# Auto-generated OWNERS file\n")
                   yaml.dump({"reviewers": reviewers, "approvers": approvers}, f)
-    
-          # def setup_branch(branch):
-          #     subprocess.run(["git", "remote", "add", "upstream", f"https://github.com/{ORG}/{REPO}.git"], check=True)
-          #     subprocess.run(["git", "fetch", "upstream", branch], check=True)
-          #     result = subprocess.run( ["git", "ls-remote", "--heads", "upstream", branch],capture_output=True, text=True)
-          #     if result.stdout:
-          #       subprocess.run(["git", "checkout", "-b", branch, f"upstream/{branch}"], check=True)
-          #     else:
-          #       print(f"❌ Remote branch upstream/{branch} does not exist.")
-              # subprocess.run(["git", "checkout", branch, f"upstream/{branch}"], check=True)
-
-          # def remote_branch_exists(branch_name):
-          #     result = subprocess.run(["git", "ls-remote", "--heads", "origin", branch_name], capture_output=True, text=True)
-          #     return bool(result.stdout.strip())
-          # def local_branch_exists(branch_name):
-          #     result = subprocess.run(["git", "branch", "--list", branch_name], capture_output=True, text=True)
-          #     return bool(result.stdout.strip())
 
           def create_pr(base,branch):
               print(f"Inside create_pr: base={base} branch={branch}")
@@ -488,13 +471,14 @@ jobs:
               f"https://x-access-token:{TOKEN}@github.com/{FORK_ORG}/{REPO}.git",
               clone_dir
           ], check=True)
+    
           for b in branches:
               print("Print debug 4 loop",b)
-              name = b["name"]
+              branch_name = b["name"]
               commit_date = get_commit_date(b["commit"]["url"])
               if commit_date >= CUTOFF:
                   os.chdir(clone_dir)
-                  print(f"🔁 Processing branch: {b}")
+                  print(f"🔁 Processing branch: {branch_name}")
                   try:
                     # Reset any existing local changes and checkout the branch cleanly
                     subprocess.run(["git", "reset", "--hard"], check=True)
@@ -503,24 +487,24 @@ jobs:
                     # setup_branch(name)
                     subprocess.run(["git", "remote", "remove", "upstream"], check=False)
                     subprocess.run(["git", "remote", "add", "upstream", f"https://github.com/{ORG}/{REPO}.git"], check=True)
-                    result = subprocess.run( ["git", "ls-remote", "--heads", "upstream", branch],capture_output=True, text=True)
+                    result = subprocess.run( ["git", "ls-remote", "--heads", "upstream", branch_name],capture_output=True, text=True)
                     if not result.stdout.strip():
-                      print(f"❌ Remote branch upstream/{branch} does not exist.")
-                      raise RuntimeError(f"Upstream branch '{branch}' not found.")
+                      print(f"❌ Remote branch upstream/{branch_name} does not exist.")
+                      raise RuntimeError(f"Upstream branch '{branch_name}' not found.")
                     
-                    subprocess.run(["git", "fetch", "upstream", branch], check=True)
-                    subprocess.run(["git", "checkout", "-B", branch, f"upstream/{branch}"], check=True)
+                    subprocess.run(["git", "fetch", "upstream", branch_name], check=True)
+                    subprocess.run(["git", "checkout", "-B", branch_name, f"upstream/{branch_name}"], check=True)
 
-                    print(f"Creating PR branch: {name}-hackrepo-{PR_NUMBER}")
+                    print(f"Creating PR branch: {branch_name}-hackrepo-{PR_NUMBER}")
                     # Generate OWNERS + create PR
                     generate_owners(REPO, access_control)
-                    newBranchName = f"{name}-hackrepo-{PR_NUMBER}"
-                    create_pr(name,newBranchName)
+                    newBranchName = f"{branch_name}-hackrepo-{PR_NUMBER}"
+                    create_pr(branch_name,newBranchName)
 
                   except subprocess.CalledProcessError as e:
-                    print(f"⚠️ Git error on branch {name}: {e}")
+                    print(f"⚠️ Git error on branch {branch_name}: {e}")
                   except Exception as e:
-                    print(f"❌ Failed branch {name}: {e}")
+                    print(f"❌ Failed branch {branch_name}: {e}")
                   finally:
                     os.chdir("..")
           os.chdir("..")
