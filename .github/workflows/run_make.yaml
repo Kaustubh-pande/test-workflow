@@ -38,7 +38,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           cache: false
-          go-version-file: "go.mod"
+          go-version-file: "/home/runner/work/test-workflow/test-workflow/go.mod"
 
       - name: Install prerequisites
         env:
