@@ -47,13 +47,24 @@ jobs:
         run: |
           git config --global user.email "test@gmail.com"
           git config --global user.name "user"
-
+          
+      - name: Debug Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN
+          go env GOROOT
+          
       - name: Generate release
         working-directory: "./src/github.com/${{ inputs.repository }}"
         env:
           GOTOOLCHAIN: auto
         run: make ${{ inputs.command }}
 
+      - name: Debug Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN
+          go env GOROOT
 
       - name: Debug
         if: always()
