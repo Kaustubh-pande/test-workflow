@@ -28,7 +28,12 @@ jobs:
           repository: '${{ inputs.repository }}'
           path: "./src/github.com/${{ inputs.repository }}"
           ref: "${{ inputs.branch }}"
-
+          
+      - name: Show repository files
+        run: |
+          pwd
+          ls -la
+          
       - name: Setup Golang
         uses: actions/setup-go@v6
         with:
