@@ -22,6 +22,8 @@ jobs:
     name: run-command ${{ inputs.repository }} - ${{ inputs.command }}
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout hack repo
+        uses: actions/checkout@v6
       - name: Checkout ${{ inputs.repository }}
         uses: actions/checkout@v6
         with:
@@ -38,7 +40,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           cache: false
-          go-version-file: "/home/runner/work/test-workflow/test-workflow/go.mod"
+          go-version-file: "./src/github.com/Kaustubh-pande/test-workflow/go.mod"
 
       - name: Install prerequisites
         env:
