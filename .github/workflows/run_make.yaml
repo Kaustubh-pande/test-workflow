@@ -40,7 +40,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           cache: false
-          go-version-file: "./src/github.com/Kaustubh-pande/test-workflow/go.mod"
+          go-version-file: "go.mod"
 
       - name: Install prerequisites
         env:
