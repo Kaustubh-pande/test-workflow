@@ -6,15 +6,15 @@ on:
     inputs:
       repository:
         description: "Repository 'org/name'"
-        default: "openshift-knative/eventing"
+        default: "Kaustubh-pande/test-workflow"
         required: true
       command:
         description: "Command to run"
-        default: "generate-release"
+        default: "hello"
         required: true
       branch:
         description: "Branch name"
-        default: "release-v1.11"
+        default: "main"
         required: true
 
 jobs:
@@ -33,8 +33,7 @@ jobs:
         run: |
           pwd
           ls -la
-          cat go.mod
-          
+          find .         
       - name: Setup Golang
         uses: actions/setup-go@v6
         with:
