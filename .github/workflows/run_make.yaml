@@ -1,0 +1,63 @@
+---
+name: Run Makefile command
+
+on:
+  workflow_dispatch: # Manual workflow trigger
+    inputs:
+      repository:
+        description: "Repository 'org/name'"
+        default: "openshift-knative/eventing"
+        required: true
+      command:
+        description: "Command to run"
+        default: "generate-release"
+        required: true
+      branch:
+        description: "Branch name"
+        default: "release-v1.11"
+        required: true
+
+jobs:
+  run-command:
+    name: run-command ${{ inputs.repository }} - ${{ inputs.command }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ${{ inputs.repository }}
+        uses: actions/checkout@v6
+        with:
+          repository: '${{ inputs.repository }}'
+          path: "./src/github.com/${{ inputs.repository }}"
+          ref: "${{ inputs.branch }}"
+
+      - name: Setup Golang
+        uses: actions/setup-go@v6
+        with:
+          cache: false
+          go-version-file: "go.mod"
+
+      - name: Install prerequisites
+        env:
+          YQ_VERSION: 3.4.0
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+          sudo mv /usr/bin/yq /usr/local/bin/yq
+
+      - name: Configure Git user
+        run: |
+          git config --global user.email "test@gmail.com"
+          git config --global user.name "user"
+
+      - name: Generate release
+        working-directory: "./src/github.com/${{ inputs.repository }}"
+        env:
+          GOTOOLCHAIN: auto
+        run: make ${{ inputs.command }}
+
+
+      - name: Debug
+        if: always()
+        working-directory: "./src/github.com/${{ inputs.repository }}"
+        run: |
+          tree
+          git --no-pager diff
